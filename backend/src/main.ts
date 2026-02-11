@@ -24,13 +24,17 @@ async function bootstrap() {
     }),
   );
 
+  const allowedOrigins: string[] = [
+    'http://localhost',
+    'http://localhost:80',
+    'http://localhost:3000',
+  ];
+  if (process.env.APP_URL) {
+    allowedOrigins.push(process.env.APP_URL);
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost',
-      'http://localhost:80',
-      'http://localhost:3000',
-      process.env.APP_URL || 'http://localhost:3000',
-    ],
+    origin: allowedOrigins,
     credentials: true,
   });
 
