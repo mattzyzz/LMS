@@ -25,14 +25,14 @@ import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
 import api from '@/lib/api';
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/lib/constants';
-import type { Event } from '@/types';
+import type { CalendarEvent } from '@/types';
 
 dayjs.locale('ru');
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 export default function CalendarPage() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
@@ -40,10 +40,11 @@ export default function CalendarPage() {
 
   const fetchEvents = async () => {
     try {
-      const { data } = await api.get<Event[]>('/events');
-      setEvents(data);
+      const { data } = await api.get('/calendar/events');
+      const arr = Array.isArray(data) ? data : (data?.data || []);
+      setEvents(arr);
     } catch {
-      // empty
+      setEvents([]);
     } finally {
       setLoading(false);
     }

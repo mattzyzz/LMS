@@ -8,7 +8,7 @@ interface NotificationState {
   isLoading: boolean;
 
   fetchNotifications: () => Promise<void>;
-  markAsRead: (id: number) => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   addNotification: (notification: Notification) => void;
 }
@@ -21,15 +21,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const { data } = await api.get<Notification[]>('/notifications');
-      const unreadCount = data.filter((n) => !n.isRead).length;
-      set({ notifications: data, unreadCount, isLoading: false });
+      const { data } = await api.get('/notifications');
+      const arr = Array.isArray(data) ? data : (data?.data || []);
+      const unreadCount = arr.filter((n: Notification) => !n.isRead).length;
+      set({ notifications: arr, unreadCount, isLoading: false });
     } catch {
       set({ isLoading: false });
     }
   },
 
-  markAsRead: async (id: number) => {
+  markAsRead: async (id: string) => {
     try {
       await api.patch(`/notifications/${id}/read`);
       const notifications = get().notifications.map((n) =>

@@ -33,6 +33,7 @@ export class UsersService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       avatar: dto.avatar || null,
+      role: dto.role || 'employee',
     });
     return this.userRepository.save(user);
   }

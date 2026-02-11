@@ -17,8 +17,8 @@ const { TextArea } = Input;
 const { Text } = Typography;
 
 interface CommentSectionProps {
-  postId?: number;
-  lessonId?: number;
+  postId?: string;
+  lessonId?: string;
 }
 
 export default function CommentSection({ postId, lessonId }: CommentSectionProps) {
@@ -30,11 +30,12 @@ export default function CommentSection({ postId, lessonId }: CommentSectionProps
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const params: Record<string, number> = {};
+      const params: Record<string, string> = {};
       if (postId) params.postId = postId;
       if (lessonId) params.lessonId = lessonId;
-      const { data } = await api.get<Comment[]>('/comments', { params });
-      setComments(data);
+      const { data } = await api.get('/comments', { params });
+      const arr = Array.isArray(data) ? data : (data?.data || []);
+      setComments(arr);
     } catch {
       // silently fail
     } finally {
@@ -51,7 +52,7 @@ export default function CommentSection({ postId, lessonId }: CommentSectionProps
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      const payload: Record<string, unknown> = { content: newComment };
+      const payload: Record<string, unknown> = { body: newComment };
       if (postId) payload.postId = postId;
       if (lessonId) payload.lessonId = lessonId;
       await api.post('/comments', payload);
@@ -114,7 +115,7 @@ export default function CommentSection({ postId, lessonId }: CommentSectionProps
                   </Text>
                 </Space>
               }
-              description={comment.content}
+              description={comment.body}
             />
           </List.Item>
         )}

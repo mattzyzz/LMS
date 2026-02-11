@@ -2,7 +2,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Stage 2: Build the application
 FROM node:20-alpine AS build
@@ -19,6 +19,7 @@ ENV NODE_ENV=production
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/next.config.mjs ./
 COPY --from=deps /app/package*.json ./
 
 EXPOSE 3000

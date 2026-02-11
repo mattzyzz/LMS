@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsInt, Min, Max } from 'class-validator';
 
 export class CreateKudosDto {
   @ApiProperty()
   @IsUUID()
   toUserId: string;
 
-  @ApiProperty({ example: 'Great job on the project!' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   message: string;
@@ -20,5 +20,13 @@ export class CreateKudosDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(5)
   points?: number;
+}
+
+export class CreateReactionDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  emoji: string;
 }

@@ -14,7 +14,6 @@ import {
 } from 'antd';
 import {
   LikeOutlined,
-  LikeFilled,
   CommentOutlined,
   PushpinFilled,
   PlusOutlined,
@@ -39,11 +38,11 @@ export default function NewsPage() {
   const fetchPosts = async (p: number = 1, q: string = '') => {
     setLoading(true);
     try {
-      const { data } = await api.get<PaginatedResponse<Post>>('/posts', {
+      const { data } = await api.get<PaginatedResponse<Post>>('/news', {
         params: { page: p, limit: 10, search: q || undefined },
       });
       setPosts(data.data);
-      setTotal(data.total);
+      setTotal(data.meta.total);
     } catch {
       // use empty state
     } finally {
@@ -55,20 +54,9 @@ export default function NewsPage() {
     fetchPosts(page, search);
   }, [page, search]);
 
-  const handleLike = async (postId: number) => {
+  const handleLike = async (postId: string) => {
     try {
-      await api.post(`/posts/${postId}/like`);
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                isLiked: !p.isLiked,
-                likesCount: p.isLiked ? p.likesCount - 1 : p.likesCount + 1,
-              }
-            : p
-        )
-      );
+      await api.post(`/news/likes/post/${postId}`);
     } catch {
       // silently fail
     }
@@ -127,7 +115,7 @@ export default function NewsPage() {
                 avatar={
                   <Avatar
                     size={48}
-                    src={post.author?.avatarUrl}
+                    src={post.author?.avatar}
                     style={{ backgroundColor: '#1677ff' }}
                   >
                     {post.author?.firstName?.[0]}
@@ -165,30 +153,22 @@ export default function NewsPage() {
                       ellipsis={{ rows: 3 }}
                       style={{ marginBottom: 12 }}
                     >
-                      {post.excerpt || post.content}
+                      {post.content}
                     </Paragraph>
-                    {post.tags && post.tags.length > 0 && (
-                      <Space style={{ marginBottom: 12 }} wrap>
-                        {post.tags.map((tag) => (
-                          <Tag key={tag}>{tag}</Tag>
-                        ))}
-                      </Space>
-                    )}
                     <Space size={16}>
                       <Button
                         type="text"
-                        icon={post.isLiked ? <LikeFilled /> : <LikeOutlined />}
+                        icon={<LikeOutlined />}
                         onClick={(e) => {
                           e.preventDefault();
                           handleLike(post.id);
                         }}
-                        style={{ color: post.isLiked ? '#1677ff' : undefined }}
                       >
-                        {post.likesCount}
+                        Нравится
                       </Button>
                       <Link href={`/news/${post.id}#comments`}>
                         <Button type="text" icon={<CommentOutlined />}>
-                          {post.commentsCount}
+                          Комментарии
                         </Button>
                       </Link>
                     </Space>

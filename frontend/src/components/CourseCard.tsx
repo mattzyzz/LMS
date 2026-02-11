@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Card, Tag, Rate, Typography, Space, Avatar } from 'antd';
-import { UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { Card, Tag, Typography, Space, Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants';
 import type { Course } from '@/types';
 
 const { Text, Paragraph } = Typography;
@@ -20,10 +19,10 @@ export default function CourseCard({ course }: CourseCardProps) {
       <Card
         hoverable
         cover={
-          course.thumbnailUrl ? (
+          course.coverImage ? (
             <img
               alt={course.title}
-              src={course.thumbnailUrl}
+              src={course.coverImage}
               style={{ height: 180, objectFit: 'cover' }}
             />
           ) : (
@@ -42,27 +41,18 @@ export default function CourseCard({ course }: CourseCardProps) {
             </div>
           )
         }
-        actions={[
-          <Space key="enrolled">
-            <TeamOutlined />
-            <span>{course.enrollmentsCount}</span>
-          </Space>,
-          <span key="rating">
-            <Rate disabled defaultValue={course.rating || 0} style={{ fontSize: 14 }} />
-          </span>,
-        ]}
       >
         <Meta
           title={
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
               <Space>
-                <Tag color={DIFFICULTY_COLORS[course.difficulty]}>
-                  {DIFFICULTY_LABELS[course.difficulty]}
-                </Tag>
-                {course.isFree ? (
+                {course.category && <Tag color="blue">{course.category}</Tag>}
+                {course.accessType === 'free' ? (
                   <Tag color="green">Бесплатно</Tag>
+                ) : course.accessType === 'internal' ? (
+                  <Tag color="purple">Внутренний</Tag>
                 ) : (
-                  <Tag color="gold">{course.price} ₽</Tag>
+                  <Tag color="gold">{course.price} {course.currency}</Tag>
                 )}
               </Space>
               <Text strong style={{ fontSize: 16 }}>
@@ -76,12 +66,12 @@ export default function CourseCard({ course }: CourseCardProps) {
                 ellipsis={{ rows: 2 }}
                 style={{ marginBottom: 0, color: '#8c8c8c' }}
               >
-                {course.shortDescription || course.description}
+                {course.description}
               </Paragraph>
               <Space>
                 <Avatar
                   size="small"
-                  src={course.author?.avatarUrl}
+                  src={course.author?.avatar}
                   icon={<UserOutlined />}
                 />
                 <Text type="secondary" style={{ fontSize: 13 }}>

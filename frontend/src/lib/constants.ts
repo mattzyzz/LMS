@@ -12,6 +12,8 @@ export const ROLE_LABELS: Record<string, string> = {
   [Roles.TEACHER]: 'Преподаватель',
   [Roles.STUDENT]: 'Сотрудник',
   [Roles.HR]: 'HR',
+  hrd: 'HRD / Администратор',
+  employee: 'Сотрудник',
 };
 
 export const ROLE_COLORS: Record<string, string> = {
@@ -20,6 +22,8 @@ export const ROLE_COLORS: Record<string, string> = {
   [Roles.TEACHER]: 'green',
   [Roles.STUDENT]: 'default',
   [Roles.HR]: 'purple',
+  hrd: 'purple',
+  employee: 'blue',
 };
 
 export enum CourseStatuses {

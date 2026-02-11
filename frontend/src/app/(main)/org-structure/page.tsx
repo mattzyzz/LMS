@@ -36,19 +36,20 @@ export default function OrgStructurePage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
-  const [selectedDept, setSelectedDept] = useState<number | undefined>();
+  const [selectedDept, setSelectedDept] = useState<string | undefined>();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data } = await api.get<Department[]>('/departments', {
+        const { data } = await api.get('/departments', {
           params: { includeEmployees: true },
         });
-        setDepartments(data);
+        const arr = Array.isArray(data) ? data : (data?.data || []);
+        setDepartments(arr);
       } catch {
-        // empty
+        setDepartments([]);
       } finally {
         setLoading(false);
       }
@@ -99,7 +100,7 @@ export default function OrgStructurePage() {
                     >
                       <Avatar
                         size="small"
-                        src={user.avatarUrl}
+                        src={user.avatar}
                         icon={<UserOutlined />}
                         style={{ backgroundColor: '#1677ff' }}
                       />
@@ -136,7 +137,7 @@ export default function OrgStructurePage() {
                 >
                   <Avatar
                     size="small"
-                    src={user.avatarUrl}
+                    src={user.avatar}
                     icon={<UserOutlined />}
                     style={{ backgroundColor: '#1677ff' }}
                   />
@@ -212,7 +213,7 @@ export default function OrgStructurePage() {
             <div style={{ textAlign: 'center' }}>
               <Avatar
                 size={80}
-                src={selectedUser.avatarUrl}
+                src={selectedUser.avatar}
                 icon={<UserOutlined />}
                 style={{ backgroundColor: '#1677ff', marginBottom: 12 }}
               />
@@ -254,7 +255,9 @@ export default function OrgStructurePage() {
               )}
               {selectedUser.role && (
                 <Descriptions.Item label="Роль">
-                  <Tag>{ROLE_LABELS[selectedUser.role.slug] || selectedUser.role.name}</Tag>
+                  <Tag color={selectedUser.role === 'hrd' ? 'purple' : 'blue'}>
+                    {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                  </Tag>
                 </Descriptions.Item>
               )}
             </Descriptions>

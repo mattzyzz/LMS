@@ -47,15 +47,16 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const toArray = (d: any) => Array.isArray(d) ? d : (d?.data || []);
       try {
         const [userRes, enrollRes, kudosRes] = await Promise.allSettled([
-          api.get<User>(`/users/${params.id}`),
-          api.get<Enrollment[]>(`/users/${params.id}/enrollments`),
-          api.get<Kudos[]>(`/users/${params.id}/kudos`),
+          api.get(`/users/${params.id}`),
+          api.get(`/users/${params.id}/enrollments`),
+          api.get(`/users/${params.id}/kudos`),
         ]);
         if (userRes.status === 'fulfilled') setUser(userRes.value.data);
-        if (enrollRes.status === 'fulfilled') setEnrollments(enrollRes.value.data);
-        if (kudosRes.status === 'fulfilled') setKudos(kudosRes.value.data);
+        if (enrollRes.status === 'fulfilled') setEnrollments(toArray(enrollRes.value.data));
+        if (kudosRes.status === 'fulfilled') setKudos(toArray(kudosRes.value.data));
       } finally {
         setLoading(false);
       }
@@ -160,7 +161,7 @@ export default function ProfilePage() {
                   color={skillColors[skill.level] || 'default'}
                   style={{ padding: '4px 12px', fontSize: 14 }}
                 >
-                  {skill.name} — {SKILL_LEVEL_LABELS[skill.level]}
+                  {skill.skill?.name || 'Навык'} — {SKILL_LEVEL_LABELS[skill.level]}
                 </Tag>
               ))}
             </Space>
@@ -203,16 +204,16 @@ export default function ProfilePage() {
               <List.Item.Meta
                 avatar={
                   <Avatar
-                    src={k.sender?.avatarUrl}
+                    src={k.fromUser?.avatar}
                     style={{ backgroundColor: '#fa8c16' }}
                   >
-                    {k.sender?.firstName?.[0]}
+                    {k.fromUser?.firstName?.[0]}
                   </Avatar>
                 }
                 title={
                   <Text>
-                    {k.sender
-                      ? `${k.sender.firstName} ${k.sender.lastName}`
+                    {k.fromUser
+                      ? `${k.fromUser.firstName} ${k.fromUser.lastName}`
                       : 'Аноним'}
                   </Text>
                 }
@@ -272,7 +273,7 @@ export default function ProfilePage() {
                       : enrollment.status}
                   </Tag>
                 </div>
-                <Progress percent={enrollment.progress} size="small" />
+                <Progress percent={enrollment.progressPercent} size="small" />
               </div>
             </List.Item>
           )}
@@ -294,7 +295,7 @@ export default function ProfilePage() {
         >
           <Avatar
             size={96}
-            src={user.avatarUrl}
+            src={user.avatar}
             icon={<UserOutlined />}
             style={{ backgroundColor: '#1677ff', flexShrink: 0 }}
           />

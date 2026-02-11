@@ -7,7 +7,7 @@ import { UsersService } from '../../users/users.service';
 export interface JwtPayload {
   sub: string;
   email: string;
-  roles?: string[];
+  role?: string;
 }
 
 @Injectable()
@@ -28,6 +28,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User is not active or does not exist');
     }
-    return { id: user.id, email: user.email, roles: payload.roles || [] };
+    return { id: user.id, email: user.email, role: user.role };
   }
 }

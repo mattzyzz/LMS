@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsIn,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -32,4 +33,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @ApiPropertyOptional({ enum: ['hrd', 'employee'], default: 'employee' })
+  @IsOptional()
+  @IsIn(['hrd', 'employee'])
+  role?: 'hrd' | 'employee';
 }

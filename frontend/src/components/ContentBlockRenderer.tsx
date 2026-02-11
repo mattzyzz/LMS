@@ -12,18 +12,20 @@ interface ContentBlockRendererProps {
 }
 
 function RenderBlock({ block }: { block: ContentBlock }) {
+  const c = block.content as Record<string, any>;
+
   switch (block.type) {
     case 'heading':
       return (
-        <Title level={(block.metadata?.level as 1 | 2 | 3 | 4 | 5) || 3}>
-          {block.content}
+        <Title level={(c.level as 1 | 2 | 3 | 4 | 5) || 3}>
+          {c.text}
         </Title>
       );
 
     case 'text':
       return (
         <Paragraph style={{ fontSize: 16, lineHeight: 1.8 }}>
-          <span dangerouslySetInnerHTML={{ __html: block.content }} />
+          <span dangerouslySetInnerHTML={{ __html: c.html || c.text || '' }} />
         </Paragraph>
       );
 
@@ -31,13 +33,13 @@ function RenderBlock({ block }: { block: ContentBlock }) {
       return (
         <div style={{ textAlign: 'center', margin: '24px 0' }}>
           <Image
-            src={block.content}
-            alt={(block.metadata?.alt as string) || 'Изображение'}
+            src={c.url || c.src}
+            alt={c.alt || 'Изображение'}
             style={{ maxWidth: '100%', borderRadius: 8 }}
           />
-          {block.metadata?.caption && (
+          {c.caption && (
             <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-              {block.metadata.caption as string}
+              {c.caption}
             </Text>
           )}
         </div>
@@ -47,7 +49,7 @@ function RenderBlock({ block }: { block: ContentBlock }) {
       return (
         <div style={{ margin: '24px 0', position: 'relative', paddingBottom: '56.25%', height: 0 }}>
           <iframe
-            src={block.content}
+            src={c.url || c.src}
             style={{
               position: 'absolute',
               top: 0,
@@ -58,7 +60,7 @@ function RenderBlock({ block }: { block: ContentBlock }) {
               borderRadius: 8,
             }}
             allowFullScreen
-            title={(block.metadata?.title as string) || 'Видео'}
+            title={c.title || 'Видео'}
           />
         </div>
       );
@@ -77,8 +79,8 @@ function RenderBlock({ block }: { block: ContentBlock }) {
           }}
         >
           <DownloadOutlined />
-          <a href={block.content} download>
-            {(block.metadata?.filename as string) || 'Скачать файл'}
+          <a href={c.url} download>
+            {c.filename || c.name || 'Скачать файл'}
           </a>
         </div>
       );
@@ -96,39 +98,22 @@ function RenderBlock({ block }: { block: ContentBlock }) {
             fontSize: 16,
           }}
         >
-          {block.content}
-          {block.metadata?.author && (
+          {c.text}
+          {c.author && (
             <div style={{ marginTop: 8, fontStyle: 'normal' }}>
-              <Text type="secondary">— {block.metadata.author as string}</Text>
+              <Text type="secondary">— {c.author}</Text>
             </div>
           )}
         </blockquote>
       );
 
-    case 'code':
-      return (
-        <pre
-          style={{
-            margin: '16px 0',
-            padding: 16,
-            background: '#1e1e1e',
-            color: '#d4d4d4',
-            borderRadius: 8,
-            overflow: 'auto',
-            fontSize: 14,
-          }}
-        >
-          <code>{block.content}</code>
-        </pre>
-      );
-
     default:
-      return <Paragraph>{block.content}</Paragraph>;
+      return <Paragraph>{c.text || JSON.stringify(c)}</Paragraph>;
   }
 }
 
 export default function ContentBlockRenderer({ blocks }: ContentBlockRendererProps) {
-  const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const sorted = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
   return (
     <div>
       {sorted.map((block) => (

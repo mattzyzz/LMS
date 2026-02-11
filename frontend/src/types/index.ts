@@ -2,42 +2,50 @@
 // LMS TypeScript Interfaces
 // ============================================================
 
+export type UserRoleType = 'hrd' | 'employee';
+
 export interface User {
-  id: number;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
   patronymic?: string;
-  avatarUrl?: string;
+  avatar?: string;
   phone?: string;
   birthday?: string;
-  roleId: number;
-  role?: Role;
-  departmentId?: number;
+  isActive: boolean;
+  position?: string;
+  role: UserRoleType;  // Simple role: 'hrd' or 'employee'
+  legacyRole?: Role;   // Legacy role object (if needed)
   department?: Department;
   profile?: Profile;
-  position?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Role {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description?: string;
-  permissions?: string[];
+  permissions?: Permission[];
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
 }
 
 export interface Department {
-  id: number;
+  id: string;
   name: string;
   description?: string;
-  parentId?: number;
+  parentId?: string;
   parent?: Department;
   children?: Department[];
-  headId?: number;
+  headId?: string;
   head?: User;
   employees?: User[];
   createdAt: string;
@@ -45,285 +53,360 @@ export interface Department {
 }
 
 export interface Profile {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   bio?: string;
-  skills?: Skill[];
-  socialLinks?: SocialLinks;
+  phone?: string;
+  hireDate?: string;
+  birthDate?: string;
   availabilityStatus?: 'available' | 'busy' | 'away' | 'offline';
-  timezone?: string;
+  skills?: EmployeeSkill[];
+  projects?: EmployeeProject[];
 }
 
 export interface Skill {
+  id: string;
   name: string;
+  category?: string;
+}
+
+export interface EmployeeSkill {
+  id: string;
+  skill: Skill;
   level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
 
-export interface SocialLinks {
-  telegram?: string;
-  vk?: string;
-  github?: string;
-  linkedin?: string;
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface EmployeeProject {
+  id: string;
+  project: Project;
+  role?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Post {
-  id: number;
+  id: string;
   title: string;
   content: string;
-  excerpt?: string;
-  authorId: number;
+  authorId: string;
   author?: User;
   isPinned: boolean;
-  isPublished: boolean;
-  likesCount: number;
-  commentsCount: number;
-  isLiked?: boolean;
-  attachments?: Attachment[];
-  tags?: string[];
+  publishedAt?: string;
+  coverImage?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Comment {
-  id: number;
-  content: string;
-  authorId: number;
+  id: string;
+  body: string;
+  authorId: string;
   author?: User;
-  postId?: number;
-  lessonId?: number;
-  parentId?: number;
+  commentableType: string;
+  commentableId: string;
+  parentId?: string;
   replies?: Comment[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Attachment {
-  id: number;
-  filename: string;
+  id: string;
   originalName: string;
   mimeType: string;
   size: number;
   url: string;
 }
 
-export interface Event {
-  id: number;
+export interface Asset {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  storageKey: string;
+  uploadedById: string | null;
+  createdAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
   title: string;
   description?: string;
   startDate: string;
   endDate?: string;
   allDay: boolean;
-  type: 'meeting' | 'deadline' | 'holiday' | 'birthday' | 'training' | 'other';
+  type: string;
   color?: string;
   location?: string;
-  organizerId: number;
-  organizer?: User;
-  participants?: User[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CompanyGoal {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  targetDate?: string;
+  createdAt: string;
 }
 
 export interface Course {
-  id: number;
+  id: string;
   title: string;
-  description: string;
-  shortDescription?: string;
-  thumbnailUrl?: string;
-  authorId: number;
+  description?: string;
+  coverImage?: string;
+  authorId: string;
   author?: User;
-  categoryId?: number;
-  category?: CourseCategory;
   status: CourseStatus;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  duration?: number;
-  rating?: number;
-  enrollmentsCount: number;
-  isFree: boolean;
-  price?: number;
-  modules?: Module[];
+  accessType: 'free' | 'paid' | 'internal';
+  price: number;
+  currency: string;
+  category?: string;
   tags?: string[];
+  durationMinutes: number;
+  publishedAt?: string;
+  modules?: CourseModule[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CourseCategory {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-}
-
-export interface Module {
-  id: number;
+export interface CourseModule {
+  id: string;
   title: string;
   description?: string;
-  courseId: number;
-  order: number;
+  courseId: string;
+  sortOrder: number;
   lessons?: Lesson[];
 }
 
 export interface Lesson {
-  id: number;
+  id: string;
   title: string;
   description?: string;
-  moduleId: number;
-  order: number;
-  type: 'text' | 'video' | 'mixed';
+  moduleId: string;
+  sortOrder: number;
+  durationMinutes: number;
+  isFree: boolean;
   contentBlocks?: ContentBlock[];
-  duration?: number;
-  isCompleted?: boolean;
-  homeworkId?: number;
-  homework?: Homework;
 }
+
+export type ContentBlockType =
+  | 'text'
+  | 'heading'
+  | 'image'
+  | 'video'
+  | 'file'
+  | 'quote'
+  | 'quiz'
+  | 'homework'
+  | 'code'
+  | 'divider';
 
 export interface ContentBlock {
   id: string;
-  type: 'text' | 'heading' | 'image' | 'video' | 'file' | 'quote' | 'code' | 'quiz';
-  content: string;
-  metadata?: Record<string, unknown>;
-  order: number;
+  type: ContentBlockType;
+  content: Record<string, unknown>;
+  sortOrder: number;
+  lessonId: string;
 }
 
 export interface Quiz {
-  id: number;
+  id: string;
   title: string;
   description?: string;
-  courseId?: number;
-  lessonId?: number;
-  timeLimit?: number; // in minutes
+  lessonId?: string;
+  timeLimitMinutes?: number;
+  maxAttempts: number;
   passingScore: number;
-  questionsCount: number;
+  randomizeQuestions: boolean;
+  randomizeOptions: boolean;
+  showResults: boolean;
   questions?: Question[];
-  attempts?: QuizAttempt[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Question {
-  id: number;
-  quizId: number;
+  id: string;
+  quizId: string;
   text: string;
-  type: 'single' | 'multiple' | 'text' | 'ordering';
-  options?: QuestionOption[];
+  type: 'single_choice' | 'multiple_choice' | 'free_text' | 'survey';
   points: number;
-  order: number;
+  sortOrder: number;
   explanation?: string;
+  options?: AnswerOption[];
 }
 
-export interface QuestionOption {
+export interface AnswerOption {
   id: string;
   text: string;
   isCorrect?: boolean;
+  sortOrder: number;
 }
 
 export interface QuizAttempt {
-  id: number;
-  quizId: number;
-  userId: number;
-  score: number;
-  maxScore: number;
-  passed: boolean;
-  answers: Record<number, string | string[]>;
-  startedAt: string;
-  completedAt?: string;
+  id: string;
+  quizId: string;
+  userId: string;
+  status: 'in_progress' | 'submitted' | 'graded';
+  score?: number;
+  maxScore?: number;
+  passed?: boolean;
+  startedAt?: string;
+  submittedAt?: string;
+  answers?: AttemptAnswer[];
+  createdAt: string;
 }
 
-export interface Homework {
-  id: number;
+export interface AttemptAnswer {
+  id: string;
+  questionId: string;
+  selectedOptionIds?: string[];
+  freeTextAnswer?: string;
+  isCorrect?: boolean;
+  pointsEarned: number;
+}
+
+export interface HomeworkAssignment {
+  id: string;
   title: string;
   description: string;
-  lessonId: number;
+  lessonId: string;
   lesson?: Lesson;
-  courseId?: number;
-  course?: Course;
-  dueDate?: string;
-  maxScore: number;
+  deadline?: string;
+  maxScore?: number;
+  isActive: boolean;
   submissions?: Submission[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Submission {
-  id: number;
-  homeworkId: number;
-  homework?: Homework;
-  studentId: number;
+  id: string;
+  assignmentId: string;
+  assignment?: HomeworkAssignment;
+  studentId: string;
   student?: User;
-  content: string;
-  attachments?: Attachment[];
+  content?: string;
+  attachmentUrls?: string[];
   status: SubmissionStatus;
-  score?: number;
-  reviewComment?: string;
-  reviewerId?: number;
+  attempt?: number;
+  reviews?: Review[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Review {
+  id: string;
+  submissionId: string;
+  reviewerId: string;
   reviewer?: User;
-  submittedAt: string;
-  reviewedAt?: string;
+  comment: string;
+  score?: number;
+  verdict: SubmissionStatus;
+  createdAt: string;
 }
 
 export interface Enrollment {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   user?: User;
-  courseId: number;
+  courseId: string;
   course?: Course;
-  progress: number;
-  status: 'active' | 'completed' | 'paused' | 'dropped';
-  completedLessons?: number[];
-  enrolledAt: string;
+  status: 'active' | 'completed' | 'dropped';
+  progressPercent: number;
   completedAt?: string;
+  deadline?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonProgress {
+  id: string;
+  userId: string;
+  lessonId: string;
+  courseId: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  timeSpentSeconds: number;
 }
 
 export interface Notification {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
+  type: string;
   title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'course' | 'homework' | 'comment' | 'kudos';
-  isRead: boolean;
+  message?: string;
   link?: string;
+  metadata?: Record<string, unknown>;
+  isRead: boolean;
+  readAt?: string;
   createdAt: string;
 }
 
 export interface Kudos {
-  id: number;
-  senderId: number;
-  sender?: User;
-  receiverId: number;
-  receiver?: User;
+  id: string;
+  fromUserId: string;
+  fromUser?: User;
+  toUserId: string;
+  toUser?: User;
   message: string;
-  category?: 'teamwork' | 'innovation' | 'leadership' | 'quality' | 'dedication';
-  reactions?: KudosReaction[];
+  category?: string;
+  points: number;
   createdAt: string;
 }
 
 export interface KudosReaction {
-  userId: number;
+  id: string;
+  userId: string;
+  kudosId: string;
   emoji: string;
 }
 
-export interface KudosLeaderboard {
-  userId: number;
+export interface LeaderboardEntry {
+  id: string;
+  userId: string;
   user: User;
-  receivedCount: number;
-  sentCount: number;
+  totalPoints: number;
+  kudosReceived: number;
+  kudosGiven: number;
+  rank: number;
+  period: string;
+}
+
+export interface AuditLog {
+  id: string;
+  userId?: string;
+  user?: User;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+  ipAddress?: string;
+  createdAt: string;
 }
 
 // ============================================================
 // API Response Types
 // ============================================================
 
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  statusCode: number;
-}
-
 export interface PaginatedResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface LoginRequest {
@@ -342,6 +425,7 @@ export interface RegisterRequest {
   lastName: string;
   email: string;
   password: string;
+  role?: UserRoleType;
 }
 
 // ============================================================
@@ -349,4 +433,4 @@ export interface RegisterRequest {
 // ============================================================
 
 export type CourseStatus = 'draft' | 'published' | 'archived';
-export type SubmissionStatus = 'pending' | 'submitted' | 'in_review' | 'accepted' | 'rejected' | 'revision_requested';
+export type SubmissionStatus = 'submitted' | 'in_review' | 'needs_revision' | 'accepted' | 'rejected';

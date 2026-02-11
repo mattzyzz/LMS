@@ -11,6 +11,8 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
+export type UserRole = 'hrd' | 'employee';
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -32,6 +34,9 @@ export class User {
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   avatar: string | null;
+
+  @Column({ type: 'varchar', length: 50, default: 'employee' })
+  role: UserRole;
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;

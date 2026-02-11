@@ -48,15 +48,13 @@ export default function NewsDetailPage() {
     fetchPost();
   }, [params.id]);
 
+  const [liked, setLiked] = useState(false);
+
   const handleLike = async () => {
     if (!post) return;
     try {
-      await api.post(`/posts/${post.id}/like`);
-      setPost({
-        ...post,
-        isLiked: !post.isLiked,
-        likesCount: post.isLiked ? post.likesCount - 1 : post.likesCount + 1,
-      });
+      const { data } = await api.post(`/news/likes/post/${post.id}`);
+      setLiked(data.liked);
     } catch {
       // silently fail
     }
@@ -98,9 +96,6 @@ export default function NewsDetailPage() {
                 Закреплено
               </Tag>
             )}
-            {post.tags?.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
           </Space>
 
           <Title level={2} style={{ margin: 0 }}>
@@ -109,7 +104,7 @@ export default function NewsDetailPage() {
 
           <Space>
             <Avatar
-              src={post.author?.avatarUrl}
+              src={post.author?.avatar}
               style={{ backgroundColor: '#1677ff' }}
             >
               {post.author?.firstName?.[0]}
@@ -135,33 +130,15 @@ export default function NewsDetailPage() {
             </Paragraph>
           </div>
 
-          {post.attachments && post.attachments.length > 0 && (
-            <>
-              <Divider />
-              <div>
-                <Text strong>Вложения:</Text>
-                <div style={{ marginTop: 8 }}>
-                  {post.attachments.map((att) => (
-                    <div key={att.id} style={{ marginBottom: 4 }}>
-                      <a href={att.url} download>
-                        {att.originalName}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
           <Divider />
 
           <Space size={16}>
             <Button
-              type={post.isLiked ? 'primary' : 'default'}
-              icon={post.isLiked ? <LikeFilled /> : <LikeOutlined />}
+              type={liked ? 'primary' : 'default'}
+              icon={liked ? <LikeFilled /> : <LikeOutlined />}
               onClick={handleLike}
             >
-              {post.likesCount} {post.likesCount === 1 ? 'нравится' : 'нравится'}
+              Нравится
             </Button>
           </Space>
         </Space>

@@ -30,11 +30,11 @@ export default function UserAvatar({
     <Space size={8} align="center">
       <Avatar
         size={size}
-        src={user?.avatarUrl}
-        icon={!user?.avatarUrl && !initials ? <UserOutlined /> : undefined}
-        style={{ backgroundColor: user?.avatarUrl ? undefined : '#1677ff' }}
+        src={user?.avatar}
+        icon={!user?.avatar && !initials ? <UserOutlined /> : undefined}
+        style={{ backgroundColor: user?.avatar ? undefined : '#1677ff' }}
       >
-        {!user?.avatarUrl && initials}
+        {!user?.avatar && initials}
       </Avatar>
       {showName && <Text>{fullName}</Text>}
     </Space>

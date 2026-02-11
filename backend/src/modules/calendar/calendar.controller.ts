@@ -84,6 +84,9 @@ export class CalendarController {
   @Post('goals')
   @ApiOperation({ summary: 'Create company goal' })
   createGoal(@Body() body: { title: string; description?: string; targetDate?: string; ownerId?: string }) {
-    return this.calendarService.createGoal(body);
+    return this.calendarService.createGoal({
+      ...body,
+      targetDate: body.targetDate ? new Date(body.targetDate) : undefined,
+    });
   }
 }

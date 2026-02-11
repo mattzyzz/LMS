@@ -69,11 +69,6 @@ services:
       - backend
     env_file:
       - .env
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
     networks:
       - lms-network
 
