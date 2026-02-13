@@ -1,0 +1,48 @@
+# Don't copy these to Docker build context
+node_modules/
+.git/
+.next/
+dist/
+
+# Frontend (not needed for backend build)
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+
+# Backend build artifacts (will be rebuilt)
+backend/node_modules/
+backend/dist/
+
+# Environment and secrets
+.env
+.env.local
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+docker-compose*.yml
+Dockerfile
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test and coverage
+coverage/
+*.test.js
+*.spec.js
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Database data
+pgdata/
