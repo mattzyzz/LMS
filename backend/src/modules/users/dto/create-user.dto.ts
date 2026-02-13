@@ -6,6 +6,8 @@ import {
   IsString,
   MinLength,
   IsIn,
+  IsBoolean,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -38,4 +40,14 @@ export class CreateUserDto {
   @IsOptional()
   @IsIn(['hrd', 'employee'])
   role?: 'hrd' | 'employee';
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string;
 }

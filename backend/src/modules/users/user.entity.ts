@@ -8,8 +8,11 @@ import {
   Index,
   OneToMany,
   OneToOne,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Department } from '../departments/department.entity';
 
 export type UserRole = 'hrd' | 'employee';
 
@@ -40,6 +43,13 @@ export class User {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  departmentId: string | null;
+
+  @ManyToOne(() => Department, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'departmentId' })
+  department: Department | null;
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   @Exclude()

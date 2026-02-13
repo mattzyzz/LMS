@@ -34,12 +34,16 @@ export class UsersService {
       lastName: dto.lastName,
       avatar: dto.avatar || null,
       role: dto.role || 'employee',
+      isActive: dto.isActive ?? true,
+      departmentId: dto.departmentId || null,
     });
-    return this.userRepository.save(user);
+    const saved = await this.userRepository.save(user);
+    return this.findById(saved.id);
   }
 
   async findAll(pagination: PaginationDto): Promise<PaginatedResponseDto<User>> {
     const [data, total] = await this.userRepository.findAndCount({
+      relations: ['department'],
       order: { [pagination.sort]: pagination.order },
       skip: pagination.skip,
       take: pagination.limit,
@@ -48,7 +52,10 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['department'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -62,7 +69,8 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.findById(id);
     Object.assign(user, dto);
-    return this.userRepository.save(user);
+    await this.userRepository.save(user);
+    return this.findById(id);
   }
 
   async remove(id: string): Promise<void> {
