@@ -18,6 +18,7 @@ import {
 import {
   CreateQuizDto,
   UpdateQuizDto,
+  UpdateQuestionDto,
   CreateQuestionDto,
   CreateAnswerOptionDto,
   SubmitAttemptDto,
@@ -72,8 +73,63 @@ export class QuizzesService {
 
   async updateQuiz(id: string, dto: UpdateQuizDto): Promise<Quiz> {
     const quiz = await this.findQuizById(id);
-    Object.assign(quiz, dto);
-    return this.quizRepo.save(quiz);
+    const { questions: questionDtos, ...quizFields } = dto;
+    Object.assign(quiz, quizFields);
+    await this.quizRepo.save(quiz);
+
+    if (questionDtos !== undefined) {
+      await this.syncQuestions(id, questionDtos);
+    }
+
+    return this.findQuizById(id);
+  }
+
+  private async syncQuestions(quizId: string, questionDtos: UpdateQuestionDto[]): Promise<void> {
+    const existing = await this.questionRepo.find({
+      where: { quizId },
+      relations: ['options'],
+    });
+    const existingIds = existing.map((q) => q.id);
+    const incomingIds = questionDtos.filter((q) => q.id).map((q) => q.id);
+
+    // Delete removed questions
+    const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
+    if (toDelete.length > 0) {
+      await this.questionRepo.delete(toDelete);
+    }
+
+    // Upsert questions
+    for (const qDto of questionDtos) {
+      const { id: qId, options: optionDtos, ...qFields } = qDto;
+
+      let question: Question;
+      if (qId && existingIds.includes(qId)) {
+        // Update existing
+        question = existing.find((q) => q.id === qId)!;
+        Object.assign(question, qFields);
+        await this.questionRepo.save(question);
+      } else {
+        // Create new
+        question = this.questionRepo.create({ ...qFields, quizId });
+        question = await this.questionRepo.save(question);
+      }
+
+      // Sync options
+      if (optionDtos !== undefined) {
+        // Delete all existing options and recreate
+        await this.optionRepo.delete({ questionId: question.id });
+        if (optionDtos.length > 0) {
+          const options = optionDtos.map((o, idx) =>
+            this.optionRepo.create({
+              ...o,
+              sortOrder: o.sortOrder ?? idx,
+              questionId: question.id,
+            }),
+          );
+          await this.optionRepo.save(options);
+        }
+      }
+    }
   }
 
   async removeQuiz(id: string): Promise<void> {

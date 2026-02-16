@@ -149,6 +149,45 @@ export class CreateQuizDto {
   questions?: CreateQuestionDto[];
 }
 
+export class UpdateQuestionDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  text: string;
+
+  @ApiProperty({ enum: QuestionType })
+  @IsEnum(QuestionType)
+  type: QuestionType;
+
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  points?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  explanation?: string;
+
+  @ApiPropertyOptional({ type: [CreateAnswerOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAnswerOptionDto)
+  options?: CreateAnswerOptionDto[];
+}
+
 export class UpdateQuizDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -159,6 +198,11 @@ export class UpdateQuizDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  topicId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -213,6 +257,13 @@ export class UpdateQuizDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @ApiPropertyOptional({ type: [UpdateQuestionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateQuestionDto)
+  questions?: UpdateQuestionDto[];
 }
 
 export class SubmitAnswerDto {
