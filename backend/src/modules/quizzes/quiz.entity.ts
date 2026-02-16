@@ -10,13 +10,29 @@ import {
   Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Lesson } from '../courses/course.entity';
+import { Lesson, CourseModule, DripType } from '../courses/course.entity';
 
 export enum QuestionType {
   SINGLE_CHOICE = 'single_choice',
   MULTIPLE_CHOICE = 'multiple_choice',
   FREE_TEXT = 'free_text',
   SURVEY = 'survey',
+  TRUE_FALSE = 'true_false',
+  FILL_BLANKS = 'fill_blanks',
+  SHORT_ANSWER = 'short_answer',
+  MATCHING = 'matching',
+  ORDERING = 'ordering',
+}
+
+export enum PassingScoreType {
+  PERCENTAGE = 'percentage',
+  POINTS = 'points',
+}
+
+export enum FeedbackMode {
+  AFTER_SUBMISSION = 'after_submission',
+  AFTER_ALL_ATTEMPTS = 'after_all_attempts',
+  NEVER = 'never',
 }
 
 @Entity('quizzes')
@@ -38,6 +54,17 @@ export class Quiz {
   @JoinColumn({ name: 'lessonId' })
   lesson: Lesson | null;
 
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  topicId: string | null;
+
+  @ManyToOne(() => CourseModule, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'topicId' })
+  topic: CourseModule | null;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
+
   @Column({ type: 'int', nullable: true })
   timeLimitMinutes: number | null;
 
@@ -47,6 +74,12 @@ export class Quiz {
   @Column({ type: 'int', default: 70 })
   passingScore: number;
 
+  @Column({ type: 'enum', enum: PassingScoreType, default: PassingScoreType.PERCENTAGE })
+  passingScoreType: PassingScoreType;
+
+  @Column({ type: 'enum', enum: FeedbackMode, default: FeedbackMode.AFTER_SUBMISSION })
+  feedbackMode: FeedbackMode;
+
   @Column({ type: 'boolean', default: false })
   randomizeQuestions: boolean;
 
@@ -55,6 +88,18 @@ export class Quiz {
 
   @Column({ type: 'boolean', default: true })
   showResults: boolean;
+
+  @Column({ type: 'enum', enum: DripType, default: DripType.NONE })
+  dripType: DripType;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dripDate: Date | null;
+
+  @Column({ type: 'int', nullable: true })
+  dripDaysAfterEnrollment: number | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  dripPrerequisiteId: string | null;
 
   @OneToMany(() => Question, (q) => q.quiz, { cascade: true })
   questions: Question[];
@@ -120,6 +165,9 @@ export class AnswerOption {
 
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  matchPair: string | null;
 }
 
 export enum AttemptStatus {

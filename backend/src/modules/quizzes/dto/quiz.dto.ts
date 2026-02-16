@@ -13,7 +13,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { QuestionType } from '../quiz.entity';
+import { QuestionType, PassingScoreType, FeedbackMode } from '../quiz.entity';
+import { DripType } from '../../courses/course.entity';
 
 export class CreateAnswerOptionDto {
   @ApiProperty()
@@ -29,6 +30,11 @@ export class CreateAnswerOptionDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  matchPair?: string;
 }
 
 export class CreateQuestionDto {
@@ -83,6 +89,16 @@ export class CreateQuizDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsUUID()
+  topicId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsInt()
   @Min(1)
   timeLimitMinutes?: number;
@@ -100,6 +116,16 @@ export class CreateQuizDto {
   @Max(100)
   passingScore?: number;
 
+  @ApiPropertyOptional({ enum: PassingScoreType })
+  @IsOptional()
+  @IsEnum(PassingScoreType)
+  passingScoreType?: PassingScoreType;
+
+  @ApiPropertyOptional({ enum: FeedbackMode })
+  @IsOptional()
+  @IsEnum(FeedbackMode)
+  feedbackMode?: FeedbackMode;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
@@ -109,6 +135,11 @@ export class CreateQuizDto {
   @IsOptional()
   @IsBoolean()
   randomizeOptions?: boolean;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
 
   @ApiPropertyOptional({ type: [CreateQuestionDto] })
   @IsOptional()
@@ -148,6 +179,16 @@ export class UpdateQuizDto {
   @Max(100)
   passingScore?: number;
 
+  @ApiPropertyOptional({ enum: PassingScoreType })
+  @IsOptional()
+  @IsEnum(PassingScoreType)
+  passingScoreType?: PassingScoreType;
+
+  @ApiPropertyOptional({ enum: FeedbackMode })
+  @IsOptional()
+  @IsEnum(FeedbackMode)
+  feedbackMode?: FeedbackMode;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
@@ -162,6 +203,16 @@ export class UpdateQuizDto {
   @IsOptional()
   @IsBoolean()
   showResults?: boolean;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 }
 
 export class SubmitAnswerDto {

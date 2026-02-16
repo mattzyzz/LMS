@@ -10,7 +10,7 @@ import {
   Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Lesson } from '../courses/course.entity';
+import { Lesson, CourseModule, DripType } from '../courses/course.entity';
 
 @Entity('homework_assignments')
 export class HomeworkAssignment {
@@ -24,12 +24,23 @@ export class HomeworkAssignment {
   description: string;
 
   @Index()
-  @Column({ type: 'uuid' })
-  lessonId: string;
+  @Column({ type: 'uuid', nullable: true })
+  lessonId: string | null;
 
-  @ManyToOne(() => Lesson, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Lesson, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'lessonId' })
-  lesson: Lesson;
+  lesson: Lesson | null;
+
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  topicId: string | null;
+
+  @ManyToOne(() => CourseModule, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'topicId' })
+  topic: CourseModule | null;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
 
   @Column({ type: 'timestamp', nullable: true })
   deadline: Date | null;
@@ -40,8 +51,47 @@ export class HomeworkAssignment {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ type: 'int', nullable: true })
+  timeLimitHours: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  passingScore: number | null;
+
+  @Column({ type: 'boolean', default: true })
+  allowFileUpload: boolean;
+
+  @Column({ type: 'simple-array', nullable: true })
+  allowedFileTypes: string[] | null;
+
+  @Column({ type: 'int', default: 10 })
+  maxFileSizeMb: number;
+
+  @Column({ type: 'int', default: 5 })
+  maxFilesCount: number;
+
+  @Column({ type: 'boolean', default: true })
+  allowResubmission: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  allowTextAnswer: boolean;
+
+  @Column({ type: 'enum', enum: DripType, default: DripType.NONE })
+  dripType: DripType;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dripDate: Date | null;
+
+  @Column({ type: 'int', nullable: true })
+  dripDaysAfterEnrollment: number | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  dripPrerequisiteId: string | null;
+
   @OneToMany(() => Submission, (s) => s.assignment)
   submissions: Submission[];
+
+  @OneToMany('AssignmentAttachment', 'assignment', { cascade: true })
+  attachments: any[];
 
   @CreateDateColumn()
   createdAt: Date;

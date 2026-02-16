@@ -234,11 +234,22 @@ export interface Quiz {
   updatedAt: string;
 }
 
+export type QuestionType =
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'free_text'
+  | 'survey'
+  | 'true_false'
+  | 'fill_blanks'
+  | 'short_answer'
+  | 'matching'
+  | 'ordering';
+
 export interface Question {
   id: string;
   quizId: string;
   text: string;
-  type: 'single_choice' | 'multiple_choice' | 'free_text' | 'survey';
+  type: QuestionType;
   points: number;
   sortOrder: number;
   explanation?: string;
@@ -250,6 +261,7 @@ export interface AnswerOption {
   text: string;
   isCorrect?: boolean;
   sortOrder: number;
+  matchPair?: string | null;
 }
 
 export interface QuizAttempt {
@@ -434,3 +446,6 @@ export interface RegisterRequest {
 
 export type CourseStatus = 'draft' | 'published' | 'archived';
 export type SubmissionStatus = 'submitted' | 'in_review' | 'needs_revision' | 'accepted' | 'rejected';
+
+// Re-export courseBuilder types
+export * from './courseBuilder';

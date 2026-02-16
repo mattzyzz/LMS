@@ -100,7 +100,7 @@ export default function CreateNewsPage() {
             label="Содержание"
             rules={[{ required: true, message: 'Введите содержание' }]}
           >
-            <RichTextEditor placeholder="Текст новости..." rows={12} />
+            <RichTextEditor placeholder="Текст новости..." />
           </Form.Item>
 
           <Form.Item name="tags" label="Теги (через запятую)">

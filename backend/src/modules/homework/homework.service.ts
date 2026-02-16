@@ -54,6 +54,13 @@ export class HomeworkService {
     });
   }
 
+  async findAssignmentsByTopic(topicId: string): Promise<HomeworkAssignment[]> {
+    return this.assignmentRepo.find({
+      where: { topicId, isActive: true },
+      order: { sortOrder: 'ASC' },
+    });
+  }
+
   async updateAssignment(id: string, dto: UpdateAssignmentDto): Promise<HomeworkAssignment> {
     const assignment = await this.findAssignmentById(id);
     if (dto.deadline) {

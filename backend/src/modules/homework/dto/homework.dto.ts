@@ -12,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 import { SubmissionStatus } from '../homework.entity';
+import { DripType } from '../../courses/course.entity';
 
 export class CreateAssignmentDto {
   @ApiProperty()
@@ -24,9 +25,20 @@ export class CreateAssignmentDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
-  lessonId: string;
+  lessonId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  topicId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -38,6 +50,56 @@ export class CreateAssignmentDto {
   @IsInt()
   @Min(0)
   maxScore?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  timeLimitHours?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  passingScore?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowFileUpload?: boolean;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allowedFileTypes?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxFileSizeMb?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxFilesCount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowResubmission?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowTextAnswer?: boolean;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
 }
 
 export class UpdateAssignmentDto {
@@ -66,6 +128,61 @@ export class UpdateAssignmentDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  timeLimitHours?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  passingScore?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowFileUpload?: boolean;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allowedFileTypes?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxFileSizeMb?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxFilesCount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowResubmission?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  allowTextAnswer?: boolean;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 }
 
 export class CreateSubmissionDto {

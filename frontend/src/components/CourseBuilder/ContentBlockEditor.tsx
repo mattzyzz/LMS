@@ -1455,7 +1455,6 @@ export default function ContentBlockEditor({
     'code',
   ];
   const specialBlocks: ContentBlockType[] = ['quote', 'divider'];
-  const interactiveBlocks: ContentBlockType[] = ['quiz', 'homework'];
 
   return (
     <div>
@@ -1512,30 +1511,6 @@ export default function ContentBlockEditor({
           </div>
         </div>
 
-        <div>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Интерактив:
-          </Text>
-          <div style={{ marginTop: 4 }}>
-            <Space wrap size="small">
-              {interactiveBlocks.map((type) => {
-                const cfg = blockTypeConfig[type];
-                return (
-                  <Button
-                    key={type}
-                    type="primary"
-                    ghost
-                    icon={cfg.icon}
-                    onClick={() => handleAddBlock(type)}
-                    style={{ borderColor: cfg.color, color: cfg.color }}
-                  >
-                    {cfg.labelRu}
-                  </Button>
-                );
-              })}
-            </Space>
-          </div>
-        </div>
       </Card>
 
       {/* Blocks List */}

@@ -62,6 +62,14 @@ export class QuizzesService {
     });
   }
 
+  async findQuizzesByTopic(topicId: string): Promise<Quiz[]> {
+    return this.quizRepo.find({
+      where: { topicId },
+      relations: ['questions', 'questions.options'],
+      order: { sortOrder: 'ASC' },
+    });
+  }
+
   async updateQuiz(id: string, dto: UpdateQuizDto): Promise<Quiz> {
     const quiz = await this.findQuizById(id);
     Object.assign(quiz, dto);

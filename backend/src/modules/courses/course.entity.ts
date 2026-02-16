@@ -24,6 +24,26 @@ export enum CourseAccessType {
   INTERNAL = 'internal',
 }
 
+export enum DifficultyLevel {
+  BEGINNER = 'beginner',
+  INTERMEDIATE = 'intermediate',
+  ADVANCED = 'advanced',
+}
+
+export enum DripType {
+  NONE = 'none',
+  SCHEDULE = 'schedule',
+  AFTER_ENROLLMENT = 'after_enrollment',
+  PREREQUISITE = 'prerequisite',
+}
+
+export enum VideoSource {
+  UPLOAD = 'upload',
+  YOUTUBE = 'youtube',
+  VIMEO = 'vimeo',
+  RUTUBE = 'rutube',
+}
+
 @Entity('courses')
 export class Course {
   @PrimaryGeneratedColumn('uuid')
@@ -35,6 +55,9 @@ export class Course {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  shortDescription: string | null;
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   coverImage: string | null;
@@ -62,6 +85,10 @@ export class Course {
   @Column({ type: 'varchar', length: 100, nullable: true })
   category: string | null;
 
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  categoryId: string | null;
+
   @Column({ type: 'simple-array', nullable: true })
   tags: string[] | null;
 
@@ -70,6 +97,24 @@ export class Course {
 
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
+
+  @Column({ type: 'enum', enum: DifficultyLevel, nullable: true })
+  difficultyLevel: DifficultyLevel | null;
+
+  @Column({ type: 'enum', enum: DripType, default: DripType.NONE })
+  dripType: DripType;
+
+  @Column({ type: 'int', nullable: true })
+  maxParticipants: number | null;
+
+  @Column({ type: 'boolean', default: false })
+  certificateEnabled: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  requireAllCompletion: boolean;
+
+  @Column({ type: 'simple-array', nullable: true })
+  learningObjectives: string[] | null;
 
   @Column({ type: 'timestamp', nullable: true })
   publishedAt: Date | null;
@@ -145,8 +190,32 @@ export class Lesson {
   @Column({ type: 'boolean', default: false })
   isFree: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  htmlContent: string | null;
+
+  @Column({ type: 'enum', enum: VideoSource, nullable: true })
+  videoSource: VideoSource | null;
+
+  @Column({ type: 'varchar', length: 1024, nullable: true })
+  videoUrl: string | null;
+
+  @Column({ type: 'enum', enum: DripType, default: DripType.NONE })
+  dripType: DripType;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dripDate: Date | null;
+
+  @Column({ type: 'int', nullable: true })
+  dripDaysAfterEnrollment: number | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  dripPrerequisiteId: string | null;
+
   @OneToMany(() => ContentBlock, (cb) => cb.lesson, { cascade: true })
   contentBlocks: ContentBlock[];
+
+  @OneToMany('LessonAttachment', 'lesson', { cascade: true })
+  attachments: any[];
 
   @CreateDateColumn()
   createdAt: Date;

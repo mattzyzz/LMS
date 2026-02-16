@@ -47,6 +47,21 @@ export class QuizzesController {
     return this.quizzesService.findQuizByLesson(lessonId);
   }
 
+  @Post('topic/:topicId')
+  @ApiOperation({ summary: 'Create quiz in a topic' })
+  createInTopic(
+    @Param('topicId', ParseUUIDPipe) topicId: string,
+    @Body() dto: CreateQuizDto,
+  ) {
+    return this.quizzesService.createQuiz({ ...dto, topicId });
+  }
+
+  @Get('topic/:topicId')
+  @ApiOperation({ summary: 'Get quizzes for a topic' })
+  findByTopic(@Param('topicId', ParseUUIDPipe) topicId: string) {
+    return this.quizzesService.findQuizzesByTopic(topicId);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update quiz' })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateQuizDto) {

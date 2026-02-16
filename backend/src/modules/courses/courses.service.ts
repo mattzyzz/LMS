@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course, CourseStatus, CourseModule, Lesson, ContentBlock, Asset } from './course.entity';
+import { LessonAttachment } from './entities/lesson-attachment.entity';
+import { Quiz } from '../quizzes/quiz.entity';
+import { HomeworkAssignment } from '../homework/homework.entity';
 import {
   CreateCourseDto,
   UpdateCourseDto,
@@ -12,7 +15,9 @@ import {
   CreateContentBlockDto,
   UpdateContentBlockDto,
   ReorderBlocksDto,
+  CreateLessonAttachmentDto,
 } from './dto/course.dto';
+import { TopicItemType, ReorderTopicItemsDto } from './dto/topic-items.dto';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
@@ -28,6 +33,12 @@ export class CoursesService {
     private readonly blockRepo: Repository<ContentBlock>,
     @InjectRepository(Asset)
     private readonly assetRepo: Repository<Asset>,
+    @InjectRepository(LessonAttachment)
+    private readonly lessonAttachmentRepo: Repository<LessonAttachment>,
+    @InjectRepository(Quiz)
+    private readonly quizRepo: Repository<Quiz>,
+    @InjectRepository(HomeworkAssignment)
+    private readonly assignmentRepo: Repository<HomeworkAssignment>,
   ) {}
 
   // --- Courses ---
@@ -121,7 +132,7 @@ export class CoursesService {
   async findLessonById(id: string): Promise<Lesson> {
     const lesson = await this.lessonRepo.findOne({
       where: { id },
-      relations: ['contentBlocks'],
+      relations: ['contentBlocks', 'attachments'],
       order: { contentBlocks: { sortOrder: 'ASC' } },
     });
     if (!lesson) throw new NotFoundException('Lesson not found');
@@ -235,5 +246,122 @@ export class CoursesService {
     }
 
     return course;
+  }
+
+  // --- Builder endpoint: course with topics + merged items ---
+
+  async findCourseForBuilder(id: string) {
+    const course = await this.courseRepo.findOne({
+      where: { id },
+      relations: ['author', 'modules', 'modules.lessons'],
+    });
+    if (!course) throw new NotFoundException('Course not found');
+
+    const moduleIds = course.modules.map((m) => m.id);
+
+    let quizzes: Quiz[] = [];
+    let assignments: HomeworkAssignment[] = [];
+    if (moduleIds.length > 0) {
+      quizzes = await this.quizRepo
+        .createQueryBuilder('quiz')
+        .where('quiz.topicId IN (:...ids)', { ids: moduleIds })
+        .getMany();
+
+      assignments = await this.assignmentRepo
+        .createQueryBuilder('assignment')
+        .where('assignment.topicId IN (:...ids)', { ids: moduleIds })
+        .getMany();
+    }
+
+    const quizByTopic = new Map<string, Quiz[]>();
+    quizzes.forEach((q) => {
+      if (q.topicId) {
+        const arr = quizByTopic.get(q.topicId) || [];
+        arr.push(q);
+        quizByTopic.set(q.topicId, arr);
+      }
+    });
+
+    const assignmentByTopic = new Map<string, HomeworkAssignment[]>();
+    assignments.forEach((a) => {
+      if (a.topicId) {
+        const arr = assignmentByTopic.get(a.topicId) || [];
+        arr.push(a);
+        assignmentByTopic.set(a.topicId, arr);
+      }
+    });
+
+    // Merge items per topic, sort by sortOrder
+    const topics = course.modules
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((mod) => {
+        const items: any[] = [];
+
+        (mod.lessons || []).forEach((l) => {
+          items.push({ ...l, itemType: 'lesson' });
+        });
+
+        (quizByTopic.get(mod.id) || []).forEach((q) => {
+          items.push({ ...q, itemType: 'quiz' });
+        });
+
+        (assignmentByTopic.get(mod.id) || []).forEach((a) => {
+          items.push({ ...a, itemType: 'assignment' });
+        });
+
+        items.sort((a, b) => a.sortOrder - b.sortOrder);
+
+        return {
+          id: mod.id,
+          title: mod.title,
+          description: mod.description,
+          courseId: mod.courseId,
+          sortOrder: mod.sortOrder,
+          items,
+        };
+      });
+
+    return {
+      ...course,
+      modules: undefined,
+      topics,
+    };
+  }
+
+  // --- Reorder topic items (lessons, quizzes, assignments) ---
+
+  async reorderTopicItems(topicId: string, dto: ReorderTopicItemsDto): Promise<void> {
+    for (const item of dto.items) {
+      switch (item.type) {
+        case TopicItemType.LESSON:
+          await this.lessonRepo.update(item.id, { sortOrder: item.sortOrder });
+          break;
+        case TopicItemType.QUIZ:
+          await this.quizRepo.update(item.id, { sortOrder: item.sortOrder });
+          break;
+        case TopicItemType.ASSIGNMENT:
+          await this.assignmentRepo.update(item.id, { sortOrder: item.sortOrder });
+          break;
+      }
+    }
+  }
+
+  // --- Lesson Attachments ---
+
+  async addLessonAttachment(lessonId: string, dto: CreateLessonAttachmentDto): Promise<LessonAttachment> {
+    const lesson = await this.lessonRepo.findOne({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    const attachment = this.lessonAttachmentRepo.create({ ...dto, lessonId });
+    return this.lessonAttachmentRepo.save(attachment);
+  }
+
+  async removeLessonAttachment(attachmentId: string): Promise<void> {
+    const att = await this.lessonAttachmentRepo.findOne({ where: { id: attachmentId } });
+    if (!att) throw new NotFoundException('Attachment not found');
+    await this.lessonAttachmentRepo.remove(att);
+  }
+
+  async getLessonAttachments(lessonId: string): Promise<LessonAttachment[]> {
+    return this.lessonAttachmentRepo.find({ where: { lessonId } });
   }
 }

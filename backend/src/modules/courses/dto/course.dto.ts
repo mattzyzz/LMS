@@ -9,11 +9,12 @@ import {
   IsInt,
   IsBoolean,
   IsUUID,
+  IsDateString,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CourseAccessType, ContentBlockType } from '../course.entity';
+import { CourseAccessType, ContentBlockType, DifficultyLevel, DripType, VideoSource } from '../course.entity';
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'Introduction to TypeScript' })
@@ -25,6 +26,11 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  shortDescription?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -47,6 +53,11 @@ export class CreateCourseDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
@@ -58,6 +69,38 @@ export class CreateCourseDto {
   @IsInt()
   @Min(0)
   durationMinutes?: number;
+
+  @ApiPropertyOptional({ enum: DifficultyLevel })
+  @IsOptional()
+  @IsEnum(DifficultyLevel)
+  difficultyLevel?: DifficultyLevel;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxParticipants?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  certificateEnabled?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  requireAllCompletion?: boolean;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  learningObjectives?: string[];
 }
 
 export class UpdateCourseDto {
@@ -70,6 +113,11 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  shortDescription?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -92,6 +140,11 @@ export class UpdateCourseDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
@@ -103,6 +156,38 @@ export class UpdateCourseDto {
   @IsInt()
   @Min(0)
   durationMinutes?: number;
+
+  @ApiPropertyOptional({ enum: DifficultyLevel })
+  @IsOptional()
+  @IsEnum(DifficultyLevel)
+  difficultyLevel?: DifficultyLevel;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxParticipants?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  certificateEnabled?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  requireAllCompletion?: boolean;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  learningObjectives?: string[];
 }
 
 export class CreateModuleDto {
@@ -173,6 +258,42 @@ export class CreateLessonDto {
   @IsOptional()
   @IsBoolean()
   isFree?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  htmlContent?: string;
+
+  @ApiPropertyOptional({ enum: VideoSource })
+  @IsOptional()
+  @IsEnum(VideoSource)
+  videoSource?: VideoSource;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  dripDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  dripDaysAfterEnrollment?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  dripPrerequisiteId?: string;
 }
 
 export class UpdateLessonDto {
@@ -201,6 +322,42 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsBoolean()
   isFree?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  htmlContent?: string;
+
+  @ApiPropertyOptional({ enum: VideoSource })
+  @IsOptional()
+  @IsEnum(VideoSource)
+  videoSource?: VideoSource;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @ApiPropertyOptional({ enum: DripType })
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  dripDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  dripDaysAfterEnrollment?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  dripPrerequisiteId?: string;
 }
 
 export class CreateContentBlockDto {
@@ -256,4 +413,26 @@ export class ReorderLessonsDto {
   @IsArray()
   @IsUUID('4', { each: true })
   lessonIds: string[];
+}
+
+export class CreateLessonAttachmentDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fileName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fileUrl: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  fileSize?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  fileType?: string;
 }

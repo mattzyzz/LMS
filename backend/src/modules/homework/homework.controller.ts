@@ -110,6 +110,21 @@ export class HomeworkController {
     return this.homeworkService.createAssignment(dto);
   }
 
+  @Post('assignments/topic/:topicId')
+  @ApiOperation({ summary: 'Create assignment in a topic' })
+  createAssignmentInTopic(
+    @Param('topicId', ParseUUIDPipe) topicId: string,
+    @Body() dto: CreateAssignmentDto,
+  ) {
+    return this.homeworkService.createAssignment({ ...dto, topicId });
+  }
+
+  @Get('assignments/topic/:topicId')
+  @ApiOperation({ summary: 'Get assignments for a topic' })
+  findByTopic(@Param('topicId', ParseUUIDPipe) topicId: string) {
+    return this.homeworkService.findAssignmentsByTopic(topicId);
+  }
+
   @Get('assignments/:id')
   @ApiOperation({ summary: 'Get assignment by ID' })
   findAssignment(@Param('id', ParseUUIDPipe) id: string) {

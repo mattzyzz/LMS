@@ -25,7 +25,9 @@ import {
   ReorderBlocksDto,
   ReorderModulesDto,
   ReorderLessonsDto,
+  CreateLessonAttachmentDto,
 } from './dto/course.dto';
+import { ReorderTopicItemsDto } from './dto/topic-items.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -75,6 +77,14 @@ export class CoursesController {
   @ApiOperation({ summary: 'Get course with full content (HRD only)' })
   findOneFull(@Param('id', ParseUUIDPipe) id: string) {
     return this.coursesService.findCourseWithFullContent(id);
+  }
+
+  @Get(':id/builder')
+  @UseGuards(RolesGuard)
+  @Roles('hrd')
+  @ApiOperation({ summary: 'Get course for builder (topics with merged items)' })
+  findForBuilder(@Param('id', ParseUUIDPipe) id: string) {
+    return this.coursesService.findCourseForBuilder(id);
   }
 
   @Put(':id')
@@ -157,6 +167,17 @@ export class CoursesController {
     return this.coursesService.reorderLessons(moduleId, dto.lessonIds);
   }
 
+  @Patch('modules/:topicId/items/reorder')
+  @UseGuards(RolesGuard)
+  @Roles('hrd')
+  @ApiOperation({ summary: 'Reorder items (lessons/quizzes/assignments) in a topic' })
+  reorderTopicItems(
+    @Param('topicId', ParseUUIDPipe) topicId: string,
+    @Body() dto: ReorderTopicItemsDto,
+  ) {
+    return this.coursesService.reorderTopicItems(topicId, dto);
+  }
+
   // --- Lessons ---
 
   @Post('lessons')
@@ -187,6 +208,33 @@ export class CoursesController {
   @ApiOperation({ summary: 'Delete lesson (HRD only)' })
   removeLesson(@Param('id', ParseUUIDPipe) id: string) {
     return this.coursesService.removeLesson(id);
+  }
+
+  // --- Lesson Attachments ---
+
+  @Post('lessons/:lessonId/attachments')
+  @UseGuards(RolesGuard)
+  @Roles('hrd')
+  @ApiOperation({ summary: 'Add attachment to lesson' })
+  addLessonAttachment(
+    @Param('lessonId', ParseUUIDPipe) lessonId: string,
+    @Body() dto: CreateLessonAttachmentDto,
+  ) {
+    return this.coursesService.addLessonAttachment(lessonId, dto);
+  }
+
+  @Get('lessons/:lessonId/attachments')
+  @ApiOperation({ summary: 'Get lesson attachments' })
+  getLessonAttachments(@Param('lessonId', ParseUUIDPipe) lessonId: string) {
+    return this.coursesService.getLessonAttachments(lessonId);
+  }
+
+  @Delete('attachments/:id')
+  @UseGuards(RolesGuard)
+  @Roles('hrd')
+  @ApiOperation({ summary: 'Remove lesson attachment' })
+  removeLessonAttachment(@Param('id', ParseUUIDPipe) id: string) {
+    return this.coursesService.removeLessonAttachment(id);
   }
 
   // --- Content Blocks ---
