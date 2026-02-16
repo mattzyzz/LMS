@@ -98,8 +98,8 @@ export class CoursesService {
   }
 
   async removeCourse(id: string): Promise<void> {
-    const course = await this.findCourseById(id);
-    await this.courseRepo.softRemove(course);
+    await this.findCourseById(id);
+    await this.courseRepo.softDelete(id);
   }
 
   // --- Modules ---
