@@ -63,13 +63,17 @@ export const QuizDrawer: React.FC<QuizDrawerProps> = ({ open, quizId, topicId, o
         ...values,
         topicId,
         questions: questions.map((q, qi) => ({
-          ...q,
-          sortOrder: qi,
           id: q.id.startsWith('new-') ? undefined : q.id,
+          text: q.text,
+          type: q.type,
+          points: q.points,
+          sortOrder: qi,
+          explanation: q.explanation || undefined,
           options: (q.options || []).map((o, oi) => ({
-            ...o,
+            text: o.text,
+            isCorrect: o.isCorrect,
             sortOrder: oi,
-            id: o.id.startsWith('new-') ? undefined : o.id,
+            matchPair: o.matchPair || undefined,
           })),
         })),
       });
