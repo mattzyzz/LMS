@@ -47,8 +47,8 @@ export default function AssignCoursesPage() {
     try {
       const [usersRes, coursesRes, enrollmentsRes] = await Promise.all([
         api.get('/users'),
-        api.get('/courses', { params: { status: 'published', limit: 100 } }),
-        api.get('/enrollments', { params: { limit: 1000 } }),
+        api.get('/courses/admin', { params: { limit: 100 } }),
+        api.get('/enrollments', { params: { limit: 100 } }),
       ]);
       // Filter only employees
       const allUsers = toArray(usersRes.data);

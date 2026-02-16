@@ -137,7 +137,7 @@ export interface BuilderAnswerOption {
   matchPair?: string | null;
 }
 
-export type BuilderTab = 'info' | 'curriculum' | 'settings';
+export type BuilderTab = 'info' | 'curriculum' | 'settings' | 'enrollments';
 
 export interface DrawerState {
   open: boolean;

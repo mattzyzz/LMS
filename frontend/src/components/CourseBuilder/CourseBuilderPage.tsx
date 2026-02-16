@@ -19,6 +19,7 @@ import {
   InfoCircleOutlined,
   UnorderedListOutlined,
   SettingOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useCourseBuilderStore } from '@/stores/courseBuilder.store';
@@ -26,6 +27,7 @@ import type { BuilderTab } from '@/types/courseBuilder';
 import CourseInfoForm from './CourseInfoForm';
 import CourseSettingsForm from './CourseSettingsForm';
 import CurriculumBuilder from './CurriculumBuilder/CurriculumBuilder';
+import CourseEnrollments from './CourseEnrollments';
 import { LessonDrawer } from './LessonEditor/LessonDrawer';
 import { QuizDrawer } from './QuizEditor/QuizDrawer';
 import { AssignmentDrawer } from './AssignmentEditor/AssignmentDrawer';
@@ -155,6 +157,15 @@ const CourseBuilderPage: React.FC<CourseBuilderPageProps> = ({ courseId }) => {
         </span>
       ),
       children: <CourseSettingsForm course={course} onSave={handleSaveSettings} />,
+    },
+    {
+      key: 'enrollments',
+      label: (
+        <span>
+          <TeamOutlined /> Ученики
+        </span>
+      ),
+      children: <CourseEnrollments courseId={courseId} />,
     },
   ];
 
