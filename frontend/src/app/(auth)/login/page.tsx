@@ -55,8 +55,8 @@ export default function LoginPage() {
               background: '#FAFAFA',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#E54D2E';
-              e.currentTarget.style.background = '#FFEFEB';
+              e.currentTarget.style.borderColor = '#E52322';
+              e.currentTarget.style.background = '#FFF0F0';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = '#E8E8E8';
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 width: 48,
                 height: 48,
                 borderRadius: 12,
-                background: '#E54D2E',
+                background: '#E52322',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -102,8 +102,8 @@ export default function LoginPage() {
               background: '#FAFAFA',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#E54D2E';
-              e.currentTarget.style.background = '#FFEFEB';
+              e.currentTarget.style.borderColor = '#E52322';
+              e.currentTarget.style.background = '#FFF0F0';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = '#E8E8E8';
@@ -142,7 +142,7 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center' }}>
           <Text style={{ color: '#666' }}>
             Нет аккаунта?{' '}
-            <Link href="/register" style={{ color: '#E54D2E', fontWeight: 500 }}>
+            <Link href="/register" style={{ color: '#E52322', fontWeight: 500 }}>
               Зарегистрироваться
             </Link>
           </Text>
@@ -236,7 +236,7 @@ export default function LoginPage() {
       <div style={{ textAlign: 'center' }}>
         <Text style={{ color: '#666' }}>
           Нет аккаунта?{' '}
-          <Link href={`/register?role=${selectedRole}`} style={{ color: '#E54D2E', fontWeight: 500 }}>
+          <Link href={`/register?role=${selectedRole}`} style={{ color: '#E52322', fontWeight: 500 }}>
             Зарегистрироваться
           </Link>
         </Text>

@@ -40,7 +40,7 @@ export default function AuthLayout({
                   width: 48,
                   height: 48,
                   borderRadius: 12,
-                  background: '#E54D2E',
+                  background: '#E52322',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -56,7 +56,7 @@ export default function AuthLayout({
                   letterSpacing: '-0.5px',
                 }}
               >
-                п<span style={{ color: '#E54D2E' }}>о</span>ртал
+                п<span style={{ color: '#E52322' }}>о</span>ртал
               </span>
             </div>
           </div>

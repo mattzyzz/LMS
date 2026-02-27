@@ -98,7 +98,7 @@ function BirthdayCard({ user, label }: { user: User; label: string }) {
         size={72}
         src={user.avatar}
         icon={<UserOutlined />}
-        style={{ marginBottom: 16, border: '3px solid #F5F5F5', background: '#E54D2E' }}
+        style={{ marginBottom: 16, border: '3px solid #F5F5F5', background: '#E52322' }}
       />
       <div style={{ fontSize: 15, fontWeight: 600, color: '#1A1A1A', marginBottom: 4 }}>
         {user.firstName}
@@ -167,7 +167,7 @@ function CourseCard({ enrollment }: { enrollment: Enrollment }) {
           <Progress
             percent={enrollment.progressPercent || 0}
             showInfo={false}
-            strokeColor="#E54D2E"
+            strokeColor="#E52322"
             trailColor="#F0F0F0"
             style={{ flex: 1, margin: 0 }}
           />
@@ -307,7 +307,7 @@ function EmployeeDashboard() {
       >
         <Tag
           style={{
-            background: '#E54D2E',
+            background: '#E52322',
             color: 'white',
             border: 'none',
             marginBottom: 16,
@@ -432,7 +432,7 @@ function HrdDashboard() {
             icon={<TeamOutlined />}
             value={stats.users}
             label="Сотрудников"
-            color="#E54D2E"
+            color="#E52322"
           />
         </Col>
         <Col xs={12} lg={6}>
@@ -480,13 +480,13 @@ function HrdDashboard() {
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#E54D2E';
+                e.currentTarget.style.borderColor = '#E52322';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = '#F0F0F0';
               }}
             >
-              <BookOutlined style={{ fontSize: 24, color: '#E54D2E', marginBottom: 12 }} />
+              <BookOutlined style={{ fontSize: 24, color: '#E52322', marginBottom: 12 }} />
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Управление курсами</div>
               <div style={{ fontSize: 13, color: '#666' }}>Создание и редактирование</div>
             </div>
@@ -503,7 +503,7 @@ function HrdDashboard() {
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#E54D2E';
+                e.currentTarget.style.borderColor = '#E52322';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = '#F0F0F0';
@@ -526,7 +526,7 @@ function HrdDashboard() {
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#E54D2E';
+                e.currentTarget.style.borderColor = '#E52322';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = '#F0F0F0';
@@ -578,7 +578,7 @@ function HrdDashboard() {
                 size={40}
                 src={u.avatar}
                 icon={<UserOutlined />}
-                style={{ background: '#E54D2E' }}
+                style={{ background: '#E52322' }}
               />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: '#1A1A1A' }}>

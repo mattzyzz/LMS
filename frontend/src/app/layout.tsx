@@ -25,7 +25,7 @@ export default function RootLayout({
             locale={ruRU}
             theme={{
               token: {
-                colorPrimary: '#E54D2E',
+                colorPrimary: '#E52322',
                 colorSuccess: '#10B981',
                 colorWarning: '#E52322',
                 colorError: '#EF4444',

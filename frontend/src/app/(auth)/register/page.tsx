@@ -66,15 +66,15 @@ function RegisterForm() {
             gap: 10,
             padding: '14px 16px',
             borderRadius: 10,
-            border: isHrd ? '2px solid #E54D2E' : '1px solid #E8E8E8',
+            border: isHrd ? '2px solid #E52322' : '1px solid #E8E8E8',
             cursor: 'pointer',
             background: isHrd ? '#FFF5F3' : '#FAFAFA',
             transition: 'all 0.2s ease',
           }}
         >
-          <SettingOutlined style={{ fontSize: 18, color: isHrd ? '#E54D2E' : '#999' }} />
+          <SettingOutlined style={{ fontSize: 18, color: isHrd ? '#E52322' : '#999' }} />
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: isHrd ? '#E54D2E' : '#1A1A1A' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: isHrd ? '#E52322' : '#1A1A1A' }}>
               Администратор
             </div>
             <div style={{ fontSize: 11, color: '#999' }}>Управление</div>
@@ -89,15 +89,15 @@ function RegisterForm() {
             gap: 10,
             padding: '14px 16px',
             borderRadius: 10,
-            border: !isHrd ? '2px solid #E54D2E' : '1px solid #E8E8E8',
+            border: !isHrd ? '2px solid #E52322' : '1px solid #E8E8E8',
             cursor: 'pointer',
             background: !isHrd ? '#FFF5F3' : '#FAFAFA',
             transition: 'all 0.2s ease',
           }}
         >
-          <UserOutlined style={{ fontSize: 18, color: !isHrd ? '#E54D2E' : '#999' }} />
+          <UserOutlined style={{ fontSize: 18, color: !isHrd ? '#E52322' : '#999' }} />
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: !isHrd ? '#E54D2E' : '#1A1A1A' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: !isHrd ? '#E52322' : '#1A1A1A' }}>
               Сотрудник
             </div>
             <div style={{ fontSize: 11, color: '#999' }}>Обучение</div>

@@ -169,7 +169,7 @@ export default function MainLayout({
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: '#E54D2E',
+              background: '#E52322',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -189,7 +189,7 @@ export default function MainLayout({
                 whiteSpace: 'nowrap',
               }}
             >
-              п<span style={{ color: '#E54D2E' }}>о</span>ртал
+              п<span style={{ color: '#E52322' }}>о</span>ртал
             </span>
           )}
         </div>
@@ -214,8 +214,8 @@ export default function MainLayout({
                     margin: '2px 0',
                     borderRadius: 10,
                     cursor: 'pointer',
-                    background: isActive ? '#FFEFEB' : 'transparent',
-                    color: isActive ? '#E54D2E' : '#666666',
+                    background: isActive ? '#FFF0F0' : 'transparent',
+                    color: isActive ? '#E52322' : '#666666',
                     transition: 'all 0.15s ease',
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     whiteSpace: 'nowrap',
@@ -340,8 +340,8 @@ export default function MainLayout({
                   src={user?.avatar}
                   icon={<UserOutlined />}
                   style={{
-                    background: '#E54D2E',
-                    border: '2px solid #FFEFEB',
+                    background: '#E52322',
+                    border: '2px solid #FFF0F0',
                   }}
                 />
                 {user && (
