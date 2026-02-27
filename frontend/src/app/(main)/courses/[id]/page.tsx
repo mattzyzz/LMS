@@ -38,7 +38,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const accessTypeLabels: Record<string, { label: string; color: string }> = {
   free: { label: 'Бесплатно', color: 'green' },
-  paid: { label: 'Платный', color: 'gold' },
+  paid: { label: 'Платный', color: 'red' },
   internal: { label: 'Для сотрудников', color: 'blue' },
 };
 

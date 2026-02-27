@@ -456,7 +456,7 @@ function HrdDashboard() {
             icon={<FileTextOutlined />}
             value={stats.pending}
             label="В процессе"
-            color="#F97316"
+            color="#E52322"
           />
         </Col>
       </Row>

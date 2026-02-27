@@ -149,7 +149,7 @@ export default function AdminAnalyticsPage() {
               <Statistic
                 title="Записей на курсы"
                 value={data?.totalEnrollments || 0}
-                prefix={<RiseOutlined style={{ color: '#faad14' }} />}
+                prefix={<RiseOutlined style={{ color: '#E52322' }} />}
               />
             </Card>
           </Col>
@@ -197,7 +197,7 @@ export default function AdminAnalyticsPage() {
           <Col xs={24} lg={12}>
             <Card title="Топ достижений">
               <div style={{ textAlign: 'center', padding: 40 }}>
-                <TrophyOutlined style={{ fontSize: 64, color: '#faad14' }} />
+                <TrophyOutlined style={{ fontSize: 64, color: '#E52322' }} />
                 <Title level={4} style={{ marginTop: 16 }}>
                   Статистика по достижениям
                 </Title>

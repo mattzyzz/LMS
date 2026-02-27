@@ -22,7 +22,7 @@ interface CurriculumItemProps {
 
 const typeConfig: Record<TopicItemType, { icon: React.ReactNode; color: string; label: string }> = {
   lesson: { icon: <ReadOutlined />, color: 'blue', label: 'Урок' },
-  quiz: { icon: <FormOutlined />, color: 'orange', label: 'Тест' },
+  quiz: { icon: <FormOutlined />, color: 'red', label: 'Тест' },
   assignment: { icon: <FileTextOutlined />, color: 'green', label: 'Задание' },
 };
 

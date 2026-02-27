@@ -29,7 +29,7 @@ const { Title, Text, Paragraph } = Typography;
 const statusLabels: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   submitted: { label: 'На проверке', color: 'processing', icon: <ClockCircleOutlined /> },
   in_review: { label: 'Проверяется', color: 'processing', icon: <ClockCircleOutlined /> },
-  needs_revision: { label: 'Нужна доработка', color: 'warning', icon: <ExclamationCircleOutlined /> },
+  needs_revision: { label: 'Нужна доработка', color: 'error', icon: <ExclamationCircleOutlined /> },
   accepted: { label: 'Принято', color: 'success', icon: <CheckCircleOutlined /> },
   rejected: { label: 'Отклонено', color: 'error', icon: <ExclamationCircleOutlined /> },
 };
@@ -125,7 +125,7 @@ export default function HomeworkPage() {
                             icon={<FormOutlined />}
                             style={{
                               background: needsRevision
-                                ? '#faad14'
+                                ? '#E52322'
                                 : isOverdue
                                 ? '#ff4d4f'
                                 : '#1677ff',
@@ -136,7 +136,7 @@ export default function HomeworkPage() {
                           <Space>
                             <Text strong>{assignment.title}</Text>
                             {needsRevision && (
-                              <Tag color="warning">Требует доработки</Tag>
+                              <Tag color="error">Требует доработки</Tag>
                             )}
                             {isOverdue && !needsRevision && (
                               <Tag color="error">Просрочено</Tag>

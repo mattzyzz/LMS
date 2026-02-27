@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
       title: 'ДЗ на проверке',
       value: stats?.pendingSubmissions || 0,
       icon: <FileTextOutlined />,
-      color: '#faad14',
+      color: '#E52322',
       href: '/admin/homework-review',
     },
     {

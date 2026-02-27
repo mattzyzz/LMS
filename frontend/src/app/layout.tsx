@@ -27,7 +27,7 @@ export default function RootLayout({
               token: {
                 colorPrimary: '#E54D2E',
                 colorSuccess: '#10B981',
-                colorWarning: '#F97316',
+                colorWarning: '#E52322',
                 colorError: '#EF4444',
                 colorInfo: '#3B82F6',
                 borderRadius: 10,

@@ -41,7 +41,7 @@ export const COURSE_STATUS_LABELS: Record<string, string> = {
 export const COURSE_STATUS_COLORS: Record<string, string> = {
   [CourseStatuses.DRAFT]: 'default',
   [CourseStatuses.PUBLISHED]: 'success',
-  [CourseStatuses.ARCHIVED]: 'warning',
+  [CourseStatuses.ARCHIVED]: 'default',
 };
 
 export enum SubmissionStatuses {
@@ -65,10 +65,10 @@ export const SUBMISSION_STATUS_LABELS: Record<string, string> = {
 export const SUBMISSION_STATUS_COLORS: Record<string, string> = {
   [SubmissionStatuses.PENDING]: 'default',
   [SubmissionStatuses.SUBMITTED]: 'processing',
-  [SubmissionStatuses.IN_REVIEW]: 'warning',
+  [SubmissionStatuses.IN_REVIEW]: 'processing',
   [SubmissionStatuses.ACCEPTED]: 'success',
   [SubmissionStatuses.REJECTED]: 'error',
-  [SubmissionStatuses.REVISION_REQUESTED]: 'orange',
+  [SubmissionStatuses.REVISION_REQUESTED]: 'error',
 };
 
 export enum EventTypes {
@@ -93,7 +93,7 @@ export const EVENT_TYPE_COLORS: Record<string, string> = {
   [EventTypes.MEETING]: '#1890ff',
   [EventTypes.DEADLINE]: '#ff4d4f',
   [EventTypes.HOLIDAY]: '#52c41a',
-  [EventTypes.BIRTHDAY]: '#fa8c16',
+  [EventTypes.BIRTHDAY]: '#E52322',
   [EventTypes.TRAINING]: '#722ed1',
   [EventTypes.OTHER]: '#8c8c8c',
 };
@@ -127,7 +127,7 @@ export const AVAILABILITY_LABELS: Record<string, string> = {
 export const AVAILABILITY_COLORS: Record<string, string> = {
   available: '#52c41a',
   busy: '#ff4d4f',
-  away: '#faad14',
+  away: '#E52322',
   offline: '#d9d9d9',
 };
 

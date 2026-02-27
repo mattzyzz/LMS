@@ -19,13 +19,13 @@
 
   /* Accent Colors */
   --color-success: #52C41A;
-  --color-warning: #FAAD14;
+  --color-warning: #E52322;
   --color-error: #FF4D4F;
   --color-info: #1890FF;
 
   /* Special Colors */
   --color-dark-banner: #3D4F5F;
-  --color-tag-orange: #FF6B35;
+  --color-tag-orange: #E52322;
   --color-tag-green: #10B981;
 
   /* Shadows */
@@ -189,8 +189,8 @@ body {
 }
 
 .portal-tag-warning {
-  background: #FFF7ED;
-  color: #F97316;
+  background: #FFF0F0;
+  color: #E52322;
 }
 
 /* Button Styles */

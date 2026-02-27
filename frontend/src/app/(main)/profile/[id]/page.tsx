@@ -83,7 +83,7 @@ export default function ProfilePage() {
   const skillColors: Record<string, string> = {
     beginner: 'green',
     intermediate: 'blue',
-    advanced: 'orange',
+    advanced: 'red',
     expert: 'red',
   };
 
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                 avatar={
                   <Avatar
                     src={k.fromUser?.avatar}
-                    style={{ backgroundColor: '#fa8c16' }}
+                    style={{ backgroundColor: '#E52322' }}
                   >
                     {k.fromUser?.firstName?.[0]}
                   </Avatar>

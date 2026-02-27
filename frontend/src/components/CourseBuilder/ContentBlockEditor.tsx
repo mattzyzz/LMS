@@ -109,7 +109,7 @@ const blockTypeConfig: Record<
     icon: <FileOutlined />,
     label: 'File',
     labelRu: 'Файл',
-    color: '#fa8c16',
+    color: '#E52322',
   },
   quote: {
     icon: <MessageOutlined />,
@@ -127,7 +127,7 @@ const blockTypeConfig: Record<
     icon: <FormOutlined />,
     label: 'Homework',
     labelRu: 'Домашка',
-    color: '#faad14',
+    color: '#E52322',
   },
   code: {
     icon: <CodeOutlined />,
@@ -181,7 +181,7 @@ const questionTypeBadge = (type: string) => {
     single_choice: { text: 'Один ответ', color: 'blue' },
     multiple_choice: { text: 'Несколько ответов', color: 'purple' },
     free_text: { text: 'Свободный ответ', color: 'green' },
-    survey: { text: 'Опрос', color: 'orange' },
+    survey: { text: 'Опрос', color: 'red' },
   };
   const config = labels[type] || { text: type, color: 'default' };
   return <Tag color={config.color}>{config.text}</Tag>;
@@ -269,7 +269,7 @@ function SortableBlock({ block, onEdit, onDelete }: SortableBlockProps) {
       case 'homework':
         return (
           <Space>
-            <FormOutlined style={{ color: '#faad14' }} />
+            <FormOutlined style={{ color: '#E52322' }} />
             <Text strong>{content.title || 'Homework Assignment'}</Text>
             {content.deadline && (
               <Text type="secondary" style={{ fontSize: 12 }}>

@@ -52,7 +52,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                 ) : course.accessType === 'internal' ? (
                   <Tag color="purple">Внутренний</Tag>
                 ) : (
-                  <Tag color="gold">{course.price} {course.currency}</Tag>
+                  <Tag color="red">{course.price} {course.currency}</Tag>
                 )}
               </Space>
               <Text strong style={{ fontSize: 16 }}>

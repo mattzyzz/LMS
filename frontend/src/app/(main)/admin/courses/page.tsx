@@ -37,7 +37,7 @@ const { TextArea } = Input;
 const statusLabels: Record<string, { label: string; color: string }> = {
   draft: { label: 'Черновик', color: 'default' },
   published: { label: 'Опубликован', color: 'success' },
-  archived: { label: 'В архиве', color: 'warning' },
+  archived: { label: 'В архиве', color: 'default' },
 };
 
 const accessTypeLabels: Record<string, string> = {

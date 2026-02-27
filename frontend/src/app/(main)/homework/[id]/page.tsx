@@ -37,7 +37,7 @@ const { TextArea } = Input;
 const statusLabels: Record<string, { label: string; color: string }> = {
   submitted: { label: 'На проверке', color: 'processing' },
   in_review: { label: 'Проверяется', color: 'processing' },
-  needs_revision: { label: 'Нужна доработка', color: 'warning' },
+  needs_revision: { label: 'Нужна доработка', color: 'error' },
   accepted: { label: 'Принято', color: 'success' },
   rejected: { label: 'Отклонено', color: 'error' },
 };
@@ -301,7 +301,7 @@ export default function HomeworkDetailPage() {
                   ? 'green'
                   : review.verdict === 'rejected'
                   ? 'red'
-                  : 'orange',
+                  : 'red',
               dot:
                 review.verdict === 'accepted' ? (
                   <CheckCircleOutlined />

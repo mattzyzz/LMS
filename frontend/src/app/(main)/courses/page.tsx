@@ -27,14 +27,14 @@ const { Title, Text, Paragraph } = Typography;
 
 const accessTypeLabels: Record<string, { label: string; color: string }> = {
   free: { label: 'Бесплатно', color: 'green' },
-  paid: { label: 'Платный', color: 'gold' },
+  paid: { label: 'Платный', color: 'red' },
   internal: { label: 'Для сотрудников', color: 'blue' },
 };
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   draft: { label: 'Черновик', color: 'default' },
   published: { label: 'Опубликован', color: 'success' },
-  archived: { label: 'В архиве', color: 'warning' },
+  archived: { label: 'В архиве', color: 'default' },
 };
 
 export default function CoursesPage() {
@@ -184,7 +184,7 @@ export default function CoursesPage() {
                         <ClockCircleOutlined />
                         <Text type="secondary">{formatDuration(course.durationMinutes)}</Text>
                         {course.accessType === 'paid' && course.price > 0 && (
-                          <Text strong style={{ color: '#faad14' }}>
+                          <Text strong style={{ color: '#E52322' }}>
                             {course.price} {course.currency}
                           </Text>
                         )}
