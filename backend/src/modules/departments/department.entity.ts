@@ -40,6 +40,9 @@ export class Department {
   @JoinColumn({ name: 'headId' })
   head: User | null;
 
+  @OneToMany(() => User, (user) => user.department)
+  users: User[];
+
   @CreateDateColumn()
   createdAt: Date;
 

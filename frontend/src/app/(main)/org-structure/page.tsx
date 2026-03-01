@@ -1,161 +1,136 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Col, Input, Row, Spin, Typography, message } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import {
-  Tree,
-  Card,
-  Input,
-  Select,
-  Row,
-  Col,
-  Avatar,
-  Typography,
-  Space,
-  Tag,
-  Drawer,
-  Descriptions,
-  Badge,
-  Spin,
-} from 'antd';
-import {
-  SearchOutlined,
-  UserOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  ApartmentOutlined,
-} from '@ant-design/icons';
-import Link from 'next/link';
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core';
 import api from '@/lib/api';
-import { AVAILABILITY_LABELS, AVAILABILITY_COLORS, ROLE_LABELS } from '@/lib/constants';
-import type { Department, User } from '@/types';
-import type { DataNode } from 'antd/es/tree';
+import DepartmentItem, { OrgDepartment, OrgEmployee } from '@/components/OrgStructure/DepartmentItem';
 
 const { Title, Text } = Typography;
 
+interface OrgStats {
+  totalDepartments: number;
+  totalEmployees: number;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function findEmployee(depts: OrgDepartment[], id: string): OrgEmployee | null {
+  for (const d of depts) {
+    const found = d.employees?.find((e) => e.id === id);
+    if (found) return found;
+    if (d.children?.length) {
+      const r = findEmployee(d.children, id);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+function moveEmployee(
+  depts: OrgDepartment[],
+  employeeId: string,
+  targetDeptId: string,
+): OrgDepartment[] {
+  let moved: OrgEmployee | null = null;
+
+  function removeFrom(list: OrgDepartment[]): OrgDepartment[] {
+    return list.map((d) => ({
+      ...d,
+      employees: (d.employees ?? []).filter((e) => {
+        if (e.id === employeeId) { moved = e; return false; }
+        return true;
+      }),
+      children: d.children ? removeFrom(d.children) : [],
+    }));
+  }
+
+  function addTo(list: OrgDepartment[]): OrgDepartment[] {
+    return list.map((d) => {
+      if (d.id === targetDeptId) {
+        return {
+          ...d,
+          employees: [...(d.employees ?? []), { ...moved!, departmentId: targetDeptId }],
+        };
+      }
+      return { ...d, children: d.children ? addTo(d.children) : [] };
+    });
+  }
+
+  const without = removeFrom(depts);
+  if (!moved) return depts;
+  return addTo(without);
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function OrgStructurePage() {
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [tree, setTree] = useState<OrgDepartment[]>([]);
+  const [stats, setStats] = useState<OrgStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchValue, setSearchValue] = useState('');
-  const [selectedDept, setSelectedDept] = useState<string | undefined>();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [draggingEmployee, setDraggingEmployee] = useState<OrgEmployee | null>(null);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+  );
 
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const { data } = await api.get('/departments', {
-          params: { includeEmployees: true },
-        });
-        const arr = Array.isArray(data) ? data : (data?.data || []);
-        setDepartments(arr);
+        const [treeRes, statsRes] = await Promise.all([
+          api.get('/departments/tree'),
+          api.get('/departments/stats'),
+        ]);
+        setTree(treeRes.data ?? []);
+        setStats(statsRes.data ?? null);
       } catch {
-        setDepartments([]);
+        message.error('Не удалось загрузить оргструктуру');
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    load();
   }, []);
 
-  const buildTreeData = (depts: Department[]): DataNode[] => {
-    return depts
-      .filter((d) => !selectedDept || d.id === selectedDept)
-      .map((dept) => ({
-        key: `dept-${dept.id}`,
-        title: (
-          <Space>
-            <ApartmentOutlined />
-            <Text strong>{dept.name}</Text>
-            <Tag>{dept.employees?.length || 0} сотр.</Tag>
-          </Space>
-        ),
-        children: [
-          ...(dept.children?.map((child) => ({
-            key: `dept-${child.id}`,
-            title: (
-              <Space>
-                <ApartmentOutlined />
-                <Text strong>{child.name}</Text>
-                <Tag>{child.employees?.length || 0} сотр.</Tag>
-              </Space>
-            ),
-            children:
-              child.employees
-                ?.filter(
-                  (u) =>
-                    !searchValue ||
-                    `${u.firstName} ${u.lastName}`
-                      .toLowerCase()
-                      .includes(searchValue.toLowerCase())
-                )
-                .map((user) => ({
-                  key: `user-${user.id}`,
-                  title: (
-                    <Space
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setDrawerOpen(true);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <Avatar
-                        size="small"
-                        src={user.avatar}
-                        icon={<UserOutlined />}
-                        style={{ backgroundColor: '#1677ff' }}
-                      />
-                      <Text>
-                        {user.firstName} {user.lastName}
-                      </Text>
-                      {user.position && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          — {user.position}
-                        </Text>
-                      )}
-                    </Space>
-                  ),
-                  isLeaf: true,
-                })) || [],
-          })) || []),
-          ...(dept.employees
-            ?.filter(
-              (u) =>
-                !searchValue ||
-                `${u.firstName} ${u.lastName}`
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase())
-            )
-            .map((user) => ({
-              key: `user-${user.id}`,
-              title: (
-                <Space
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setDrawerOpen(true);
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Avatar
-                    size="small"
-                    src={user.avatar}
-                    icon={<UserOutlined />}
-                    style={{ backgroundColor: '#1677ff' }}
-                  />
-                  <Text>
-                    {user.firstName} {user.lastName}
-                  </Text>
-                  {user.position && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      — {user.position}
-                    </Text>
-                  )}
-                </Space>
-              ),
-              isLeaf: true,
-            })) || []),
-        ],
-      }));
-  };
+  const handleDragStart = useCallback(
+    (event: { active: { id: string | number } }) => {
+      setDraggingEmployee(findEmployee(tree, String(event.active.id)));
+    },
+    [tree],
+  );
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    setDraggingEmployee(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const employeeId = String(active.id);
+    const targetDeptId = String(over.id);
+    const sourceDeptId = active.data.current?.departmentId as string | undefined;
+    if (!sourceDeptId || sourceDeptId === targetDeptId) return;
+
+    setTree((prev) => moveEmployee(prev, employeeId, targetDeptId));
+    try {
+      await api.patch(`/users/${employeeId}`, { departmentId: targetDeptId });
+      message.success('Сотрудник перемещён');
+    } catch {
+      setTree((prev) => moveEmployee(prev, employeeId, sourceDeptId));
+      message.error('Не удалось переместить сотрудника');
+    }
+  }, []);
 
   return (
     <div>
@@ -163,119 +138,120 @@ export default function OrgStructurePage() {
         Организационная структура
       </Title>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} md={12}>
+      <Row gutter={[40, 24]}>
+        {/* ── Left: tree ───────────────────────────────── */}
+        <Col xs={24} lg={17}>
           <Input
-            prefix={<SearchOutlined />}
-            placeholder="Поиск сотрудника..."
+            prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
+            placeholder="Поиск сотрудника или отдела…"
             allowClear
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ marginBottom: 24, borderRadius: 8 }}
           />
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <Spin size="large" />
+            </div>
+          ) : tree.length === 0 ? (
+            <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+              Нет данных об организационной структуре
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              {tree.map((dept) => (
+                <DepartmentItem
+                  key={dept.id}
+                  dept={dept}
+                  depth={0}
+                  defaultExpanded={true}
+                  searchQuery={search}
+                />
+              ))}
+
+              <DragOverlay dropAnimation={null}>
+                {draggingEmployee && (
+                  <div
+                    style={{
+                      background: 'var(--color-bg-card)',
+                      border: '1px solid var(--color-primary-accent)',
+                      borderRadius: 8,
+                      padding: '6px 16px',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                      color: 'var(--color-text-primary)',
+                      cursor: 'grabbing',
+                    }}
+                  >
+                    {draggingEmployee.firstName} {draggingEmployee.lastName}
+                  </div>
+                )}
+              </DragOverlay>
+            </DndContext>
+          )}
         </Col>
-        <Col xs={24} md={12}>
-          <Select
-            placeholder="Фильтр по отделу"
-            allowClear
-            style={{ width: '100%' }}
-            value={selectedDept}
-            onChange={setSelectedDept}
-          >
-            {departments.map((d) => (
-              <Select.Option key={d.id} value={d.id}>
-                {d.name}
-              </Select.Option>
-            ))}
-          </Select>
+
+        {/* ── Right: stats sidebar ─────────────────────── */}
+        <Col xs={24} lg={7}>
+          <div style={{ position: 'sticky', top: 80 }}>
+            {stats && (
+              <div style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text strong style={{ fontSize: 22, color: 'var(--color-primary-accent)' }}>
+                    {stats.totalEmployees}
+                  </Text>
+                  <Text style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                    сотрудников в компании
+                  </Text>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <Text strong style={{ fontSize: 22, color: 'var(--color-primary-accent)' }}>
+                    {stats.totalDepartments}
+                  </Text>
+                  <Text style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                    отделов и департаментов
+                  </Text>
+                </div>
+              </div>
+            )}
+
+            <div
+              style={{
+                borderTop: '1px solid var(--color-border)',
+                paddingTop: 16,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
+                Перетащите сотрудника из одного отдела в другой, чтобы изменить его принадлежность.
+                Нажмите на имя сотрудника, чтобы открыть карточку.
+              </Text>
+            </div>
+          </div>
         </Col>
       </Row>
 
-      <Card loading={loading}>
-        {!loading && (
-          <Tree
-            showLine
-            defaultExpandAll
-            treeData={buildTreeData(departments)}
-            style={{ fontSize: 14 }}
-          />
-        )}
-      </Card>
-
-      <Drawer
-        title="Профиль сотрудника"
-        placement="right"
-        width={400}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
-        {selectedUser && (
-          <Space direction="vertical" size={24} style={{ width: '100%' }}>
-            <div style={{ textAlign: 'center' }}>
-              <Avatar
-                size={80}
-                src={selectedUser.avatar}
-                icon={<UserOutlined />}
-                style={{ backgroundColor: '#1677ff', marginBottom: 12 }}
-              />
-              <Title level={4} style={{ margin: 0 }}>
-                {selectedUser.firstName} {selectedUser.lastName}
-              </Title>
-              {selectedUser.position && (
-                <Text type="secondary">{selectedUser.position}</Text>
-              )}
-              <div style={{ marginTop: 8 }}>
-                <Badge
-                  color={
-                    AVAILABILITY_COLORS[
-                      selectedUser.profile?.availabilityStatus || 'offline'
-                    ]
-                  }
-                  text={
-                    AVAILABILITY_LABELS[
-                      selectedUser.profile?.availabilityStatus || 'offline'
-                    ]
-                  }
-                />
-              </div>
-            </div>
-
-            <Descriptions column={1} size="small">
-              <Descriptions.Item label={<><MailOutlined /> Email</>}>
-                {selectedUser.email}
-              </Descriptions.Item>
-              {selectedUser.phone && (
-                <Descriptions.Item label={<><PhoneOutlined /> Телефон</>}>
-                  {selectedUser.phone}
-                </Descriptions.Item>
-              )}
-              {selectedUser.department && (
-                <Descriptions.Item label="Отдел">
-                  {selectedUser.department.name}
-                </Descriptions.Item>
-              )}
-              {selectedUser.role && (
-                <Descriptions.Item label="Роль">
-                  <Tag color={selectedUser.role === 'hrd' ? 'purple' : 'blue'}>
-                    {ROLE_LABELS[selectedUser.role] || selectedUser.role}
-                  </Tag>
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-
-            <Link href={`/profile/${selectedUser.id}`}>
-              <span
-                style={{
-                  color: '#1677ff',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Перейти в полный профиль
-              </span>
-            </Link>
-          </Space>
-        )}
-      </Drawer>
+      <style>{`
+        .emp-row:hover {
+          background: color-mix(in srgb, var(--color-primary-accent) 7%, transparent) !important;
+        }
+        .dept-row:hover {
+          background: var(--color-bg-card) !important;
+        }
+      `}</style>
     </div>
   );
 }

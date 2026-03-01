@@ -37,9 +37,15 @@ export class DepartmentsController {
   }
 
   @Get('tree')
-  @ApiOperation({ summary: 'Get department tree' })
+  @ApiOperation({ summary: 'Get department tree with employees' })
   findTree() {
     return this.departmentsService.findTree();
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get org stats (total depts/employees)' })
+  getStats() {
+    return this.departmentsService.getStats();
   }
 
   @Get(':id')
