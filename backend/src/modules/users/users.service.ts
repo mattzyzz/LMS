@@ -76,12 +76,16 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findById(id);
+    await this.findById(id);
 
-    // Extract phone before assigning to user
+    // Extract phone before updating user columns
     const { phone, ...userFields } = dto;
-    Object.assign(user, userFields);
-    await this.userRepository.save(user);
+
+    // Use update() instead of save() to avoid TypeORM relation cache conflicts
+    // (save() with a loaded 'department' relation can overwrite departmentId back to old value)
+    if (Object.keys(userFields).length > 0) {
+      await this.userRepository.update(id, userFields as any);
+    }
 
     // Update profile phone if provided
     if (phone !== undefined) {
