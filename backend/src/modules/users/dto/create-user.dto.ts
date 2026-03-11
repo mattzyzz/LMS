@@ -53,7 +53,7 @@ export class CreateUserDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUUID('all')
   departmentId?: string;
 
   @ApiPropertyOptional({ example: 'Руководитель отдела' })
@@ -68,12 +68,12 @@ export class CreateUserDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUUID('all')
   managerId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsUUID('all')
   positionId?: string;
 
   @ApiPropertyOptional({ example: '+7 921 555-00-00' })
