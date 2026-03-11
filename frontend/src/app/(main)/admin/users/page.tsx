@@ -32,6 +32,7 @@ const { Title } = Typography;
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<{ id: string; title: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,12 +44,14 @@ export default function AdminUsersPage() {
       setLoading(true);
       const toArray = (d: any) => Array.isArray(d) ? d : (d?.data || []);
       try {
-        const [usersRes, deptsRes] = await Promise.all([
+        const [usersRes, deptsRes, posRes] = await Promise.all([
           api.get('/users'),
           api.get('/departments').catch(() => ({ data: [] })),
+          api.get('/dictionaries/positions').catch(() => ({ data: [] })),
         ]);
         setUsers(toArray(usersRes.data));
         setDepartments(toArray(deptsRes.data));
+        setPositions(toArray(posRes.data));
       } catch {
         setUsers([]);
         message.error('Ошибка загрузки данных');
@@ -81,6 +84,7 @@ export default function AdminUsersPage() {
       email: user.email,
       role: user.role,
       departmentId: user.department?.id,
+      positionId: (user as any).positionId ?? null,
       isActive: user.isActive,
     });
     setIsModalOpen(true);
@@ -272,6 +276,15 @@ export default function AdminUsersPage() {
               allowClear
               placeholder="Выберите отдел"
               options={departments.map((d) => ({ value: d.id, label: d.name }))}
+            />
+          </Form.Item>
+          <Form.Item name="positionId" label="Должность (из справочника)">
+            <Select
+              allowClear
+              showSearch
+              placeholder="Выберите должность"
+              filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())}
+              options={positions.map((p) => ({ value: p.id, label: p.title }))}
             />
           </Form.Item>
           <Form.Item name="isActive" label="Статус" initialValue={true}>

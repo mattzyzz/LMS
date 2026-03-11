@@ -20,6 +20,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { HealthModule } from './modules/health/health.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { ThemeModule } from './modules/theme/theme.module';
+import { DictionariesModule } from './modules/dictionaries/dictionaries.module';
+import { SuperadminModule } from './modules/superadmin/superadmin.module';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { CategoriesModule } from './modules/categories/categories.module';
     UploadModule,
     HealthModule,
     CategoriesModule,
+    ThemeModule,
+    DictionariesModule,
+    SuperadminModule,
   ],
 })
 export class AppModule {}

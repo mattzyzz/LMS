@@ -4,11 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
   Index,
 } from 'typeorm';
-import { Department } from './department.entity';
 
 @Entity('positions')
 export class Position {
@@ -19,15 +16,18 @@ export class Position {
   @Column({ type: 'varchar', length: 200 })
   title: string;
 
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  slug: string | null;
+
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
-  departmentId: string | null;
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 
-  @ManyToOne(() => Department, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'departmentId' })
-  department: Department | null;
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
 
   @CreateDateColumn()
   createdAt: Date;

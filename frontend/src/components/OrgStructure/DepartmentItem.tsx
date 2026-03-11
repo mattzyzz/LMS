@@ -53,19 +53,39 @@ export interface OrgDepartment {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const STATUS_DOT_COLOR: Record<string, string> = {
-  available: '#1677ff',
-  busy:      '#1677ff',
-  on_leave:  '#1677ff',
-  offline:   '#c8c8c8',
-};
+// Colors are resolved at runtime via CSS vars (set by ThemeProvider)
+function getStatusDotColor(status: string): string {
+  if (typeof window === 'undefined') {
+    const defaults: Record<string, string> = {
+      available: '#52c41a', busy: '#ff4d4f', on_leave: '#1677ff', offline: '#c8c8c8',
+    };
+    return defaults[status] ?? '#c8c8c8';
+  }
+  const map: Record<string, string> = {
+    available: '--color-status-available',
+    busy:      '--color-status-busy',
+    on_leave:  '--color-status-on-leave',
+    offline:   '--color-status-offline',
+  };
+  const varName = map[status];
+  if (!varName) return '#c8c8c8';
+  const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return val || '#c8c8c8';
+}
 
-const AVATAR_PALETTE = ['#E52322', '#1677ff', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96'];
+// Avatar palette — first slot updated at render time from CSS var
+const AVATAR_PALETTE_BASE = ['#E52322', '#1677ff', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96'];
+function getAvatarPalette(): string[] {
+  if (typeof window === 'undefined') return AVATAR_PALETTE_BASE;
+  const primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+  return primary ? [primary, ...AVATAR_PALETTE_BASE.slice(1)] : AVATAR_PALETTE_BASE;
+}
 
 function avatarColor(name: string) {
+  const palette = getAvatarPalette();
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+  return palette[Math.abs(h) % palette.length];
 }
 
 function initials(first: string, last: string) {
@@ -127,19 +147,19 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
           {/* Avatar circle */}
           <div style={{
-            width: 48, height: 48, borderRadius: '50%', background: bg, flexShrink: 0,
+            width: 60, height: 60, borderRadius: '50%', background: bg, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: '0.5px',
+            fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '0.5px',
           }}>
             {employee.avatar
-              ? <img src={employee.avatar} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+              ? <img src={employee.avatar} alt="" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover' }} />
               : initials(employee.firstName, employee.lastName)
             }
           </div>
 
           {/* Name + position + badge */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, lineHeight: '22px', color: '#1a1a1a', marginBottom: 2 }}>
+            <div style={{ fontSize: 17, fontWeight: 600, lineHeight: '24px', color: '#1a1a1a', marginBottom: 2 }}>
               {fullName}
             </div>
             {position && (
@@ -150,7 +170,8 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
             {onVacation && (
               <span style={{
                 display: 'inline-block', padding: '2px 10px', borderRadius: 10,
-                fontSize: 12, fontWeight: 500, background: '#1677ff', color: '#fff',
+                fontSize: 12, fontWeight: 500,
+                background: 'var(--color-status-on-leave, #1677ff)', color: '#fff',
                 lineHeight: '20px',
               }}>
                 В отпуске до {formatDate(employee.profile!.vacationUntil)}
@@ -182,18 +203,18 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
         </div>
       </div>
 
-      {/* Buttons footer — серый фон как на скриншоте */}
+      {/* Buttons footer */}
       <div style={{
         display: 'flex', gap: 8, padding: '10px 12px',
-        borderTop: '1px solid #e8e8e8',
-        background: '#f5f5f5',
+        borderTop: '1px solid #f0f0f0',
+        background: '#fff',
       }}>
         {/* Посмотреть профиль */}
         <Link href={`/profile/${employee.id}`} style={{ flex: 1, textDecoration: 'none' }}>
           <button style={{
-            width: '100%', height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 7, background: '#fff', border: '1px solid #d9d9d9', borderRadius: 6,
-            cursor: 'pointer', fontSize: 13, color: '#333', fontFamily: 'inherit',
+            width: '100%', height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 7, background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
+            cursor: 'pointer', fontSize: 14, color: '#333', fontFamily: 'inherit',
             transition: 'border-color 0.15s',
           }}>
             <PersonInCircleIcon size={16} color="#555" />
@@ -204,12 +225,12 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
         {/* Написать */}
         <a href={`mailto:${employee.email}`} title={`Написать ${employee.firstName}`}>
           <button style={{
-            width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: '#fff', border: '1px solid #d9d9d9', borderRadius: 6,
+            width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
             cursor: 'pointer', flexShrink: 0,
             transition: 'border-color 0.15s',
           }}>
-            <EnvelopeIcon size={14} color="#555" />
+            <EnvelopeIcon size={15} color="#555" />
           </button>
         </a>
       </div>
@@ -231,7 +252,7 @@ interface EmployeeRowProps {
 function EmployeeRow({ employee, departmentId, isExpanded, onToggle, isAdmin, onRemove }: EmployeeRowProps) {
   const [hovered, setHovered] = useState(false);
   const status = employee.profile?.availabilityStatus ?? 'offline';
-  const dotColor = STATUS_DOT_COLOR[status] ?? '#c8c8c8';
+  const dotColor = getStatusDotColor(status);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: employee.id,
@@ -321,13 +342,14 @@ interface DeptActionsProps {
   onAddChild: () => void;
   onAssignHead: () => void;
   onAddEmployee: () => void;
+  addChildLabel?: string;
 }
 
-function DeptActionMenu({ onRename, onDelete, onAddChild, onAssignHead, onAddEmployee }: DeptActionsProps) {
+function DeptActionMenu({ onRename, onDelete, onAddChild, onAssignHead, onAddEmployee, addChildLabel = 'Добавить подотдел' }: DeptActionsProps) {
   return (
     <Dropdown trigger={['click']} menu={{ items: [
       { key: 'add-emp',    icon: <UserAddOutlined />, label: 'Добавить сотрудника',    onClick: onAddEmployee },
-      { key: 'add-child',  icon: <PlusOutlined />,   label: 'Добавить отдел внутрь',  onClick: onAddChild },
+      { key: 'add-child',  icon: <PlusOutlined />,   label: addChildLabel,            onClick: onAddChild },
       { key: 'head',       icon: <UserOutlined />,   label: 'Назначить руководителя', onClick: onAssignHead },
       { type: 'divider' },
       { key: 'rename',     label: 'Переименовать',    onClick: onRename },
@@ -390,7 +412,6 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
   const isExpanded  = expanded || forceExpand;
 
   const headLabel = depth === 0 ? 'Директор департамента' : 'Руководитель отдела';
-  const headName  = dept.head ? `${dept.head.firstName} ${dept.head.lastName}` : 'не назначен';
 
   const fetchAllUsers = async () => {
     if (allUsers.length > 0) return;
@@ -465,6 +486,7 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
         ref={setNodeRef}
         style={{
           marginLeft: depth > 0 ? 32 : 0,
+          marginBottom: depth === 0 ? 16 : 6,
           borderRadius: 6,
           background: isOver ? '#f0f4ff' : undefined,
           transition: 'background 0.15s',
@@ -481,23 +503,25 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
         >
           {/* +/- circle button */}
           <span style={{
-            width: 22, height: 22, borderRadius: '50%',
+            width: 30, height: 30, borderRadius: '50%',
             border: '1px solid #d0d0d0',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0, background: '#fff', color: '#666',
           }}>
             {isExpanded
-              ? <MinusOutlined style={{ fontSize: 8 }} />
-              : <PlusOutlined  style={{ fontSize: 8 }} />}
+              ? <MinusOutlined style={{ fontSize: 9 }} />
+              : <PlusOutlined  style={{ fontSize: 9 }} />}
           </span>
 
           {/* Name + subtitle */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: depth === 0 ? 15 : 14, fontWeight: 600, color: '#1a1a1a', lineHeight: '22px' }}>
+            <div style={{ fontSize: depth === 0 ? 16 : 15, fontWeight: 600, color: '#1a1a1a', lineHeight: '22px' }}>
               {dept.name}
             </div>
             <div style={{ fontSize: 12, color: '#8c8c8c', lineHeight: '17px' }}>
-              {headLabel} — {headName}
+              {dept.head
+                ? `${headLabel} — ${dept.head.firstName} ${dept.head.lastName}`
+                : `${headLabel} не назначен`}
             </div>
           </div>
 
@@ -508,6 +532,7 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
               onAddChild={() => setAddChildOpen(true)}
               onAssignHead={() => { setAssignHeadId(dept.head?.id); fetchAllUsers(); setAssignHeadOpen(true); }}
               onAddEmployee={() => { fetchAllUsers(); setAddEmpOpen(true); }}
+              addChildLabel={depth === 0 ? 'Новый отдел' : 'Добавить подотдел'}
             />
           )}
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { useThemeStore } from '@/stores/theme.store';
 import {
   Layout,
   Avatar,
@@ -80,6 +81,7 @@ export default function MainLayout({
   const pathname = usePathname();
   const { user, fetchUser, logout } = useAuthStore();
   const { unreadCount, fetchNotifications } = useNotificationStore();
+  const { theme } = useThemeStore();
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function MainLayout({
   const selectedKey = getSelectedKey();
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#F5F5F5' }}>
+    <Layout style={{ minHeight: '100vh', background: 'var(--color-bg, #F5F5F5)' }}>
       {/* Sidebar */}
       <Sider
         collapsible
@@ -142,8 +144,8 @@ export default function MainLayout({
         onMouseEnter={() => setCollapsed(false)}
         onMouseLeave={() => setCollapsed(true)}
         style={{
-          background: '#FFFFFF',
-          borderRight: '1px solid #F0F0F0',
+          background: 'var(--sidebar-bg, #FFFFFF)',
+          borderRight: '1px solid var(--color-border, #F0F0F0)',
           position: 'fixed',
           left: 0,
           top: 0,
@@ -161,35 +163,41 @@ export default function MainLayout({
             alignItems: 'center',
             justifyContent: collapsed ? 'center' : 'flex-start',
             padding: collapsed ? 0 : '0 20px',
-            borderBottom: '1px solid #F0F0F0',
+            borderBottom: '1px solid var(--color-border, #F0F0F0)',
           }}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: '#E52322',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: 'white', fontSize: 16, fontWeight: 700 }}>П</span>
-          </div>
+          {theme.logoUrl ? (
+            <img src={theme.logoUrl} alt={theme.brandName} style={{ height: 32, maxWidth: collapsed ? 32 : 120, objectFit: 'contain' }} />
+          ) : (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: 'var(--color-primary, #E52322)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ color: 'white', fontSize: 16, fontWeight: 700 }}>
+                {theme.brandName?.[0]?.toUpperCase() ?? 'П'}
+              </span>
+            </div>
+          )}
           {!collapsed && (
             <span
               style={{
                 marginLeft: 12,
                 fontSize: 18,
                 fontWeight: 700,
-                color: '#1A1A1A',
+                color: 'var(--color-text-primary, #1A1A1A)',
                 letterSpacing: '-0.5px',
                 whiteSpace: 'nowrap',
               }}
             >
-              п<span style={{ color: '#E52322' }}>о</span>ртал
+              {theme.brandName ?? 'Портал'}
             </span>
           )}
         </div>
@@ -214,8 +222,8 @@ export default function MainLayout({
                     margin: '2px 0',
                     borderRadius: 10,
                     cursor: 'pointer',
-                    background: isActive ? '#FFF0F0' : 'transparent',
-                    color: isActive ? '#E52322' : '#666666',
+                    background: isActive ? 'var(--nav-active-bg, #FFF0F0)' : 'transparent',
+                    color: isActive ? 'var(--nav-active-color, #E52322)' : '#666666',
                     transition: 'all 0.15s ease',
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     whiteSpace: 'nowrap',
@@ -223,8 +231,8 @@ export default function MainLayout({
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.background = '#F5F5F5';
-                      e.currentTarget.style.color = '#1A1A1A';
+                      e.currentTarget.style.background = 'var(--color-bg, #F5F5F5)';
+                      e.currentTarget.style.color = 'var(--color-text-primary, #1A1A1A)';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -252,18 +260,18 @@ export default function MainLayout({
         style={{
           marginLeft: collapsed ? 72 : 72,
           transition: 'margin-left 0.2s ease',
-          background: '#F5F5F5',
+          background: 'var(--color-bg, #F5F5F5)',
         }}
       >
         {/* Header */}
         <Header
           style={{
-            background: '#FFFFFF',
+            background: 'var(--header-bg, #FFFFFF)',
             padding: '0 32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid #F0F0F0',
+            borderBottom: '1px solid var(--color-border, #F0F0F0)',
             position: 'sticky',
             top: 0,
             zIndex: 99,
@@ -340,8 +348,8 @@ export default function MainLayout({
                   src={user?.avatar}
                   icon={<UserOutlined />}
                   style={{
-                    background: '#E52322',
-                    border: '2px solid #FFF0F0',
+                    background: 'var(--color-primary, #E52322)',
+                    border: '2px solid var(--nav-active-bg, #FFF0F0)',
                   }}
                 />
                 {user && (
@@ -365,6 +373,7 @@ export default function MainLayout({
           style={{
             padding: 32,
             minHeight: 'calc(100vh - 64px)',
+            background: 'var(--color-bg, #F5F5F5)',
           }}
         >
           {children}

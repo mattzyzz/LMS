@@ -44,6 +44,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   position: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  positionId: string | null;
+
   @Column({ type: 'varchar', length: 50, nullable: true })
   employeeNumber: string | null;
 

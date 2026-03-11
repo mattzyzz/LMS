@@ -71,6 +71,11 @@ export class CreateUserDto {
   @IsUUID()
   managerId?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  positionId?: string;
+
   @ApiPropertyOptional({ example: '+7 921 555-00-00' })
   @IsOptional()
   @IsString()

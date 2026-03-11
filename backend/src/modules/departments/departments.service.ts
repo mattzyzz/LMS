@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { Department } from './department.entity';
 import { Position } from './position.entity';
 import { User } from '../users/user.entity';
@@ -151,12 +151,13 @@ export class DepartmentsService {
     await this.departmentRepository.remove(dept);
   }
 
-  async createPosition(title: string, departmentId?: string, description?: string): Promise<Position> {
-    const position = this.positionRepository.create({ title, departmentId, description });
+  async createPosition(title: string, description?: string): Promise<Position> {
+    const position = this.positionRepository.create({ title, description, isActive: true, sortOrder: 0 } as DeepPartial<Position>);
     return this.positionRepository.save(position);
   }
 
   async findAllPositions(): Promise<Position[]> {
-    return this.positionRepository.find({ relations: ['department'] });
+    const rows = await this.positionRepository.find({ order: { sortOrder: 'ASC' as any, title: 'ASC' } });
+    return rows;
   }
 }
