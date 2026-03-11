@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   Card, Tabs, Form, Input, InputNumber, Button, Space, message,
-  ColorPicker, Divider, Typography, Spin, Row, Col, Tooltip, Tag,
+  ColorPicker, Divider, Typography, Spin, Row, Col, Tooltip, Tag, Popconfirm,
 } from 'antd';
 import type { Color } from 'antd/es/color-picker';
-import { SaveOutlined, CheckCircleOutlined, CopyOutlined } from '@ant-design/icons';
+import { SaveOutlined, CheckCircleOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import superadminApi from '@/lib/superadmin-api';
 import api from '@/lib/api';
 import { useThemeStore, ThemeConfig } from '@/stores/theme.store';
@@ -225,6 +225,16 @@ export default function SuperadminThemePage() {
                     {t.isActive ? 'Активна' : 'Активировать'}
                   </Button>
                   <Button size="small" icon={<CopyOutlined />} onClick={(e) => { e.stopPropagation(); handleDuplicate(t.id); }} />
+                  {!t.isActive && (
+                    <Popconfirm
+                      title="Удалить тему?"
+                      onConfirm={(e) => { e?.stopPropagation(); handleDelete(t.id); if (editing.id === t.id) setEditing({ ...themes.find(x => x.isActive) ?? themes[0] }); }}
+                      onCancel={(e) => e?.stopPropagation()}
+                      okText="Удалить" cancelText="Отмена" okButtonProps={{ danger: true }}
+                    >
+                      <Button size="small" danger icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
+                    </Popconfirm>
+                  )}
                 </Space>
               </div>
             ))}
