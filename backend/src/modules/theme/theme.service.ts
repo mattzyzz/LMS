@@ -53,7 +53,10 @@ export class ThemeService implements OnModuleInit {
 
   async activate(id: string): Promise<ThemeConfig> {
     await this.findById(id);
-    await this.repo.update({} as any, { isActive: false } as any);
+    await this.repo.createQueryBuilder()
+      .update(ThemeConfig)
+      .set({ isActive: false })
+      .execute();
     await this.repo.update(id, { isActive: true } as any);
     return this.findById(id);
   }
