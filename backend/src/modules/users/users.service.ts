@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
+import { EmployeeProfile } from '../profiles/employee-profile.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
@@ -16,15 +17,13 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(EmployeeProfile)
+    private readonly profileRepository: Repository<EmployeeProfile>,
   ) {}
 
   async create(dto: CreateUserDto): Promise<User> {
-    const existing = await this.userRepository.findOne({
-      where: { email: dto.email },
-    });
-    if (existing) {
-      throw new ConflictException('Email already in use');
-    }
+    const existing = await this.userRepository.findOne({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email already in use');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = this.userRepository.create({
@@ -32,12 +31,24 @@ export class UsersService {
       passwordHash,
       firstName: dto.firstName,
       lastName: dto.lastName,
-      avatar: dto.avatar || null,
-      role: dto.role || 'employee',
+      patronymic: dto.patronymic ?? null,
+      avatar: dto.avatar ?? null,
+      role: dto.role ?? 'employee',
       isActive: dto.isActive ?? true,
-      departmentId: dto.departmentId || null,
+      departmentId: dto.departmentId ?? null,
+      position: dto.position ?? null,
+      employeeNumber: dto.employeeNumber ?? null,
+      managerId: dto.managerId ?? null,
     });
     const saved = await this.userRepository.save(user);
+
+    // Auto-create employee profile
+    const profile = this.profileRepository.create({
+      userId: saved.id,
+      phone: dto.phone ?? null,
+    });
+    await this.profileRepository.save(profile);
+
     return this.findById(saved.id);
   }
 
@@ -56,9 +67,7 @@ export class UsersService {
       where: { id },
       relations: ['department'],
     });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
@@ -68,8 +77,25 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.findById(id);
-    Object.assign(user, dto);
+
+    // Extract phone before assigning to user
+    const { phone, ...userFields } = dto;
+    Object.assign(user, userFields);
     await this.userRepository.save(user);
+
+    // Update profile phone if provided
+    if (phone !== undefined) {
+      let profile = await this.profileRepository.findOne({ where: { userId: id } });
+      if (profile) {
+        profile.phone = phone;
+        await this.profileRepository.save(profile);
+      } else {
+        await this.profileRepository.save(
+          this.profileRepository.create({ userId: id, phone }),
+        );
+      }
+    }
+
     return this.findById(id);
   }
 
@@ -80,9 +106,7 @@ export class UsersService {
 
   async setRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
     let hashed: string | null = null;
-    if (refreshToken) {
-      hashed = await bcrypt.hash(refreshToken, 12);
-    }
+    if (refreshToken) hashed = await bcrypt.hash(refreshToken, 12);
     await this.userRepository.update(userId, { refreshToken: hashed });
   }
 

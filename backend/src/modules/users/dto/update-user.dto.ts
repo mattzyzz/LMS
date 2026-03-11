@@ -1,16 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID, IsIn } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
-  @ApiPropertyOptional({ example: 'John' })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   firstName?: string;
 
-  @ApiPropertyOptional({ example: 'Doe' })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patronymic?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -22,8 +28,34 @@ export class UpdateUserDto {
   @IsBoolean()
   isActive?: boolean;
 
+  // Allow null to remove from department
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(({ value }) => value === null ? null : value)
+  departmentId?: string | null;
+
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
-  departmentId?: string;
+  @IsString()
+  position?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  employeeNumber?: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @Transform(({ value }) => value === null ? null : value)
+  managerId?: string | null;
+
+  @ApiPropertyOptional({ enum: ['hrd', 'employee'] })
+  @IsOptional()
+  @IsIn(['hrd', 'employee'])
+  role?: 'hrd' | 'employee';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

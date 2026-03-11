@@ -28,6 +28,10 @@ async function bootstrap() {
     'http://localhost',
     'http://localhost:80',
     'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
   ];
   if (process.env.APP_URL) {
     allowedOrigins.push(process.env.APP_URL);

@@ -21,15 +21,20 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'John' })
+  @ApiProperty({ example: 'Иван' })
   @IsString()
   @IsNotEmpty()
   firstName: string;
 
-  @ApiProperty({ example: 'Doe' })
+  @ApiProperty({ example: 'Иванов' })
   @IsString()
   @IsNotEmpty()
   lastName: string;
+
+  @ApiPropertyOptional({ example: 'Иванович' })
+  @IsOptional()
+  @IsString()
+  patronymic?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -50,4 +55,24 @@ export class CreateUserDto {
   @IsOptional()
   @IsUUID()
   departmentId?: string;
+
+  @ApiPropertyOptional({ example: 'Руководитель отдела' })
+  @IsOptional()
+  @IsString()
+  position?: string;
+
+  @ApiPropertyOptional({ example: '1481' })
+  @IsOptional()
+  @IsString()
+  employeeNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  managerId?: string;
+
+  @ApiPropertyOptional({ example: '+7 921 555-00-00' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Col, Input, Modal, Row, Spin, Typography, message } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Col, Form, Input, Modal, Row, Select, Spin, Typography, message } from 'antd';
+import { PlusOutlined, SearchOutlined, UserAddOutlined } from '@ant-design/icons';
 import {
   DndContext,
   DragEndEvent,
@@ -90,6 +90,12 @@ export default function OrgStructurePage() {
   const [addDeptName, setAddDeptName] = useState('');
   const [addDeptLoading, setAddDeptLoading] = useState(false);
 
+  // Create employee modal
+  const [createEmpOpen, setCreateEmpOpen] = useState(false);
+  const [createEmpLoading, setCreateEmpLoading] = useState(false);
+  const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
+  const [empForm] = Form.useForm();
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
@@ -140,6 +146,36 @@ export default function OrgStructurePage() {
     }
   }, []);
 
+  const openCreateEmp = async () => {
+    setCreateEmpOpen(true);
+    // Build flat list of depts for select
+    const flatDepts: { value: string; label: string }[] = [];
+    const flatten = (nodes: OrgDepartment[], prefix = '') => {
+      nodes.forEach((d) => {
+        flatDepts.push({ value: d.id, label: prefix + d.name });
+        if (d.children?.length) flatten(d.children, prefix + '  ');
+      });
+    };
+    flatten(tree);
+    setDeptOptions(flatDepts);
+  };
+
+  const handleCreateEmployee = async () => {
+    try {
+      const values = await empForm.validateFields();
+      setCreateEmpLoading(true);
+      await api.post('/users', values);
+      message.success(`Сотрудник ${values.lastName} ${values.firstName} создан`);
+      empForm.resetFields();
+      setCreateEmpOpen(false);
+      await load();
+    } catch (e: any) {
+      if (e?.response?.data?.message) message.error(e.response.data.message);
+    } finally {
+      setCreateEmpLoading(false);
+    }
+  };
+
   const handleAddDept = async () => {
     if (!addDeptName.trim()) return;
     setAddDeptLoading(true);
@@ -163,13 +199,14 @@ export default function OrgStructurePage() {
           Организационная структура
         </Title>
         {isAdmin && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setAddDeptOpen(true)}
-          >
-            Добавить департамент
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button icon={<UserAddOutlined />} onClick={openCreateEmp}>
+              Новый сотрудник
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddDeptOpen(true)}>
+              Новый департамент
+            </Button>
+          </div>
         )}
       </div>
 
@@ -270,6 +307,68 @@ export default function OrgStructurePage() {
         </Col>
       </Row>
 
+      {/* Create employee modal */}
+      <Modal
+        title="Создать сотрудника"
+        open={createEmpOpen}
+        onOk={handleCreateEmployee}
+        onCancel={() => { setCreateEmpOpen(false); empForm.resetFields(); }}
+        confirmLoading={createEmpLoading}
+        okText="Создать"
+        cancelText="Отмена"
+        width={520}
+      >
+        <Form form={empForm} layout="vertical" style={{ marginTop: 12 }}>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="lastName" label="Фамилия" rules={[{ required: true, message: 'Введите фамилию' }]}>
+                <Input placeholder="Иванов" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="firstName" label="Имя" rules={[{ required: true, message: 'Введите имя' }]}>
+                <Input placeholder="Иван" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="patronymic" label="Отчество">
+            <Input placeholder="Иванович" />
+          </Form.Item>
+          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Введите email' }]}>
+            <Input placeholder="ivan@company.ru" />
+          </Form.Item>
+          <Form.Item name="password" label="Пароль" rules={[{ required: true, min: 6, message: 'Минимум 6 символов' }]}>
+            <Input.Password placeholder="Минимум 6 символов" />
+          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="position" label="Должность">
+                <Input placeholder="Менеджер по продажам" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="employeeNumber" label="Табельный номер">
+                <Input placeholder="1001" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="phone" label="Телефон">
+            <Input placeholder="+7 921 000-00-00" />
+          </Form.Item>
+          <Form.Item name="departmentId" label="Отдел / Департамент">
+            <Select showSearch allowClear placeholder="Выберите отдел"
+              filterOption={(i, o) => (o?.label as string ?? '').toLowerCase().includes(i.toLowerCase())}
+              options={deptOptions} />
+          </Form.Item>
+          <Form.Item name="role" label="Роль" initialValue="employee">
+            <Select options={[
+              { value: 'employee', label: 'Сотрудник' },
+              { value: 'hrd', label: 'HR директор' },
+            ]} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
       {/* Add root dept modal */}
       <Modal
         title="Новый департамент"
@@ -290,19 +389,10 @@ export default function OrgStructurePage() {
       </Modal>
 
       <style>{`
-        .emp-row:hover {
-          background: color-mix(in srgb, var(--color-primary-accent) 7%, transparent) !important;
-        }
-        .dept-row:hover {
-          background: var(--color-bg-card) !important;
-        }
-        .dept-row:hover .dept-menu-btn {
-          opacity: 1 !important;
-        }
-        .dept-menu-btn {
-          opacity: 0;
-          transition: opacity 0.15s;
-        }
+        .dept-row:hover { background: #f7f7f7 !important; }
+        .dept-row:hover .dept-menu-btn { opacity: 1 !important; }
+        .dept-menu-btn { opacity: 0; transition: opacity 0.12s; }
+        button:hover { border-color: #999 !important; }
       `}</style>
     </div>
   );
