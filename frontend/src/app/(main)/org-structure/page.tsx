@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Col, Input, Row, Spin, Typography, message } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Button, Col, Input, Modal, Row, Spin, Typography, message } from 'antd';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   DndContext,
   DragEndEvent,
@@ -14,6 +14,7 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import api from '@/lib/api';
+import { useAuthStore } from '@/stores/auth.store';
 import DepartmentItem, { OrgDepartment, OrgEmployee } from '@/components/OrgStructure/DepartmentItem';
 
 const { Title, Text } = Typography;
@@ -23,7 +24,7 @@ interface OrgStats {
   totalEmployees: number;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function findEmployee(depts: OrgDepartment[], id: string): OrgEmployee | null {
   for (const d of depts) {
@@ -75,35 +76,42 @@ function moveEmployee(
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OrgStructurePage() {
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'hrd';
+
   const [tree, setTree] = useState<OrgDepartment[]>([]);
   const [stats, setStats] = useState<OrgStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [draggingEmployee, setDraggingEmployee] = useState<OrgEmployee | null>(null);
 
+  // Add root dept modal
+  const [addDeptOpen, setAddDeptOpen] = useState(false);
+  const [addDeptName, setAddDeptName] = useState('');
+  const [addDeptLoading, setAddDeptLoading] = useState(false);
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
   );
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [treeRes, statsRes] = await Promise.all([
-          api.get('/departments/tree'),
-          api.get('/departments/stats'),
-        ]);
-        setTree(treeRes.data ?? []);
-        setStats(statsRes.data ?? null);
-      } catch {
-        message.error('Не удалось загрузить оргструктуру');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [treeRes, statsRes] = await Promise.all([
+        api.get('/departments/tree'),
+        api.get('/departments/stats'),
+      ]);
+      setTree(treeRes.data ?? []);
+      setStats(statsRes.data ?? null);
+    } catch {
+      message.error('Не удалось загрузить оргструктуру');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleDragStart = useCallback(
     (event: { active: { id: string | number } }) => {
@@ -132,14 +140,41 @@ export default function OrgStructurePage() {
     }
   }, []);
 
+  const handleAddDept = async () => {
+    if (!addDeptName.trim()) return;
+    setAddDeptLoading(true);
+    try {
+      await api.post('/departments', { name: addDeptName.trim() });
+      message.success('Департамент создан');
+      setAddDeptOpen(false);
+      setAddDeptName('');
+      await load();
+    } catch {
+      message.error('Не удалось создать департамент');
+    } finally {
+      setAddDeptLoading(false);
+    }
+  };
+
   return (
     <div>
-      <Title level={3} style={{ marginBottom: 24 }}>
-        Организационная структура
-      </Title>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <Title level={3} style={{ margin: 0 }}>
+          Организационная структура
+        </Title>
+        {isAdmin && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setAddDeptOpen(true)}
+          >
+            Добавить департамент
+          </Button>
+        )}
+      </div>
 
       <Row gutter={[40, 24]}>
-        {/* ── Left: tree ───────────────────────────────── */}
+        {/* ── Left: tree ─────────────────────────────────── */}
         <Col xs={24} lg={17}>
           <Input
             prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
@@ -172,6 +207,8 @@ export default function OrgStructurePage() {
                   depth={0}
                   defaultExpanded={true}
                   searchQuery={search}
+                  isAdmin={isAdmin}
+                  onRefresh={load}
                 />
               ))}
 
@@ -198,19 +235,12 @@ export default function OrgStructurePage() {
           )}
         </Col>
 
-        {/* ── Right: stats sidebar ─────────────────────── */}
+        {/* ── Right: stats sidebar ───────────────────────── */}
         <Col xs={24} lg={7}>
           <div style={{ position: 'sticky', top: 80 }}>
             {stats && (
               <div style={{ marginBottom: 24 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    marginBottom: 16,
-                  }}
-                >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
                   <Text strong style={{ fontSize: 22, color: 'var(--color-primary-accent)' }}>
                     {stats.totalEmployees}
                   </Text>
@@ -229,20 +259,35 @@ export default function OrgStructurePage() {
               </div>
             )}
 
-            <div
-              style={{
-                borderTop: '1px solid var(--color-border)',
-                paddingTop: 16,
-              }}
-            >
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
               <Text style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
-                Перетащите сотрудника из одного отдела в другой, чтобы изменить его принадлежность.
-                Нажмите на имя сотрудника, чтобы открыть карточку.
+                {isAdmin
+                  ? 'Наведите на отдел для управления. Перетащите сотрудника, чтобы изменить принадлежность.'
+                  : 'Перетащите сотрудника из одного отдела в другой, чтобы изменить его принадлежность. Нажмите на имя сотрудника, чтобы открыть карточку.'}
               </Text>
             </div>
           </div>
         </Col>
       </Row>
+
+      {/* Add root dept modal */}
+      <Modal
+        title="Новый департамент"
+        open={addDeptOpen}
+        onOk={handleAddDept}
+        onCancel={() => { setAddDeptOpen(false); setAddDeptName(''); }}
+        confirmLoading={addDeptLoading}
+        okText="Создать"
+        cancelText="Отмена"
+      >
+        <Input
+          value={addDeptName}
+          onChange={(e) => setAddDeptName(e.target.value)}
+          onPressEnter={handleAddDept}
+          placeholder="Название департамента"
+          style={{ marginTop: 8 }}
+        />
+      </Modal>
 
       <style>{`
         .emp-row:hover {
@@ -250,6 +295,13 @@ export default function OrgStructurePage() {
         }
         .dept-row:hover {
           background: var(--color-bg-card) !important;
+        }
+        .dept-row:hover .dept-menu-btn {
+          opacity: 1 !important;
+        }
+        .dept-menu-btn {
+          opacity: 0;
+          transition: opacity 0.15s;
         }
       `}</style>
     </div>

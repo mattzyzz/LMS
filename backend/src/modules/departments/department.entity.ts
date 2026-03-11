@@ -29,6 +29,9 @@ export class Department {
   @Column({ type: 'uuid', nullable: true })
   headId: string | null;
 
+  @Column({ type: 'int', default: 0 })
+  order: number;
+
   @ManyToOne(() => Department, (dept) => dept.children, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'parentId' })
   parent: Department | null;

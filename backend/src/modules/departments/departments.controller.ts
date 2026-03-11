@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -12,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DepartmentsService } from './departments.service';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/create-department.dto';
+import { CreateDepartmentDto, UpdateDepartmentDto, MoveDepartmentDto } from './dto/create-department.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -58,6 +59,18 @@ export class DepartmentsController {
   @ApiOperation({ summary: 'Update department' })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateDepartmentDto) {
     return this.departmentsService.update(id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Patch department (rename / assign head)' })
+  patch(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateDepartmentDto) {
+    return this.departmentsService.update(id, dto);
+  }
+
+  @Patch(':id/move')
+  @ApiOperation({ summary: 'Move department (change parent or order)' })
+  move(@Param('id', ParseUUIDPipe) id: string, @Body() dto: MoveDepartmentDto) {
+    return this.departmentsService.move(id, dto);
   }
 
   @Delete(':id')

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateDepartmentDto {
   @ApiProperty({ example: 'Engineering' })
@@ -21,6 +21,11 @@ export class CreateDepartmentDto {
   @IsOptional()
   @IsUUID()
   headId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  order?: number;
 }
 
 export class UpdateDepartmentDto {
@@ -37,10 +42,27 @@ export class UpdateDepartmentDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
-  parentId?: string;
+  parentId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
-  headId?: string;
+  headId?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  order?: number;
+}
+
+export class MoveDepartmentDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  parentId?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  order?: number;
 }

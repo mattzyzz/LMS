@@ -35,8 +35,20 @@ export class User {
   @Column({ type: 'varchar', length: 100 })
   lastName: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  patronymic: string | null;
+
   @Column({ type: 'varchar', length: 512, nullable: true })
   avatar: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  position: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  employeeNumber: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  managerId: string | null;
 
   @Column({ type: 'varchar', length: 50, default: 'employee' })
   role: UserRole;

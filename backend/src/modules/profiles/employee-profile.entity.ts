@@ -49,6 +49,9 @@ export class EmployeeProfile {
   })
   availabilityStatus: AvailabilityStatus;
 
+  @Column({ type: 'date', nullable: true })
+  vacationUntil: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -1,65 +1,66 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Typography } from 'antd';
-import { PlusOutlined, MinusOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
-import { useDroppable } from '@dnd-kit/core';
-import { useDraggable } from '@dnd-kit/core';
+import { Button, Dropdown, Typography, Modal, Input, message } from 'antd';
+import {
+  PlusOutlined,
+  MinusOutlined,
+  MailOutlined,
+  UserOutlined,
+  MoreOutlined,
+} from '@ant-design/icons';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
+import api from '@/lib/api';
 
 const { Text } = Typography;
 
 const PAGE_SIZE = 10;
 const PAGE_INCREMENT = 50;
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface OrgEmployee {
   id: string;
   firstName: string;
   lastName: string;
+  patronymic?: string | null;
   email: string;
   avatar?: string | null;
+  position?: string | null;
   role?: string;
   departmentId?: string | null;
+  employeeNumber?: string | null;
+  managerId?: string | null;
+  managerName?: string | null;
   profile?: {
     phone?: string | null;
     availabilityStatus?: string;
+    vacationUntil?: string | null;
   } | null;
 }
 
 export interface OrgDepartment {
   id: string;
   name: string;
-  head?: { id: string; firstName: string; lastName: string } | null;
+  order?: number;
+  head?: { id: string; firstName: string; lastName: string; patronymic?: string | null } | null;
   children?: OrgDepartment[];
   employees?: OrgEmployee[];
 }
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const ROLE_LABELS: Record<string, string> = {
-  hrd: 'HRD / Администратор',
-  employee: 'Сотрудник',
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  available: '#52c41a',
-  busy:      '#faad14',
-  on_leave:  '#d48806',
+const STATUS_DOT: Record<string, string> = {
+  available: '#1677ff',
+  busy:      '#1677ff',
+  on_leave:  '#1677ff',
   offline:   '#bfbfbf',
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  available: 'Доступен',
-  busy:      'Занят',
-  on_leave:  'В отпуске',
-  offline:   'Не в сети',
-};
-
-// Stable color per name (not per render)
 const AVATAR_PALETTE = ['#E52322', '#1677ff', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96'];
+
 function avatarColor(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
@@ -70,17 +71,23 @@ function initials(first: string, last: string) {
   return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase();
 }
 
-// ── Mini Avatar (used in list row) ───────────────────────────────────────────
+function formatDate(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// ── MiniAvatar ─────────────────────────────────────────────────────────────────
 
 function MiniAvatar({ employee, size = 32 }: { employee: OrgEmployee; size?: number }) {
   const status   = employee.profile?.availabilityStatus ?? 'offline';
-  const dotColor = STATUS_COLOR[status];
+  const dotColor = STATUS_DOT[status] ?? '#bfbfbf';
   const bg       = avatarColor(employee.firstName + employee.lastName);
   const dotSize  = Math.round(size * 0.32);
 
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      {/* Circle with initials or photo */}
       {employee.avatar ? (
         <img
           src={employee.avatar}
@@ -90,50 +97,34 @@ function MiniAvatar({ employee, size = 32 }: { employee: OrgEmployee; size?: num
       ) : (
         <div
           style={{
-            width: size,
-            height: size,
-            borderRadius: '50%',
-            background: bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: Math.round(size * 0.35),
-            fontWeight: 700,
-            color: '#fff',
+            width: size, height: size, borderRadius: '50%', background: bg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: Math.round(size * 0.35), fontWeight: 700, color: '#fff',
             letterSpacing: '0.5px',
           }}
         >
           {initials(employee.firstName, employee.lastName)}
         </div>
       )}
-      {/* Status dot — bottom-right */}
       <span
         style={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: dotSize,
-          height: dotSize,
-          borderRadius: '50%',
-          background: dotColor,
-          border: '2px solid var(--color-bg-primary)',
+          position: 'absolute', bottom: 0, right: 0,
+          width: dotSize, height: dotSize, borderRadius: '50%',
+          background: dotColor, border: '2px solid var(--color-bg-primary)',
         }}
       />
     </div>
   );
 }
 
-// ── Inline Employee Card (expanded) ──────────────────────────────────────────
+// ── EmployeeCard (inline, точно по скриншоту) ─────────────────────────────────
 
 function EmployeeCard({ employee }: { employee: OrgEmployee }) {
   const status     = employee.profile?.availabilityStatus ?? 'offline';
-  const statusLabel = STATUS_LABEL[status];
-  const roleLabel   = ROLE_LABELS[employee.role ?? ''] ?? 'Сотрудник';
-  const bg          = avatarColor(employee.firstName + employee.lastName);
-
-  const badgeBg    = status === 'available' ? '#f6ffed' : status === 'offline' ? '#f5f5f5' : '#fffbe6';
-  const badgeColor = status === 'available' ? '#389e0d' : status === 'offline' ? '#8c8c8c' : '#d48806';
-  const badgeBorder = status === 'available' ? '#b7eb8f' : status === 'offline' ? '#d9d9d9' : '#ffe58f';
+  const bg         = avatarColor(employee.firstName + employee.lastName);
+  const onVacation = status === 'on_leave' && employee.profile?.vacationUntil;
+  const fullName   = [employee.firstName, employee.lastName, employee.patronymic].filter(Boolean).join(' ');
+  const position   = employee.position ?? '';
 
   return (
     <div
@@ -147,10 +138,10 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
       onClick={(e) => e.stopPropagation()}
     >
       <div style={{ padding: '16px 16px 12px' }}>
-        {/* Avatar + info */}
+        {/* Avatar + name block */}
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
           {/* Big avatar */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ flexShrink: 0 }}>
             {employee.avatar ? (
               <img
                 src={employee.avatar}
@@ -160,8 +151,7 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
             ) : (
               <div
                 style={{
-                  width: 52, height: 52, borderRadius: '50%',
-                  background: bg,
+                  width: 52, height: 52, borderRadius: '50%', background: bg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, fontWeight: 700, color: '#fff',
                 }}
@@ -171,48 +161,71 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
             )}
           </div>
 
-          {/* Text */}
+          {/* Name + position + vacation badge */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Text strong style={{ fontSize: 15, display: 'block', lineHeight: '22px', color: 'var(--color-text-primary)' }}>
-              {employee.firstName} {employee.lastName}
-            </Text>
-            <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 8, lineHeight: '18px' }}>
-              {roleLabel}
-            </Text>
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '2px 12px',
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 500,
-                background: badgeBg,
-                color: badgeColor,
-                border: `1px solid ${badgeBorder}`,
-              }}
+            <Text
+              strong
+              style={{ fontSize: 15, display: 'block', lineHeight: '22px', color: 'var(--color-text-primary)' }}
             >
-              {statusLabel}
-            </span>
+              {fullName}
+            </Text>
+            {position && (
+              <Text
+                style={{ fontSize: 13, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 8, lineHeight: '18px' }}
+              >
+                {position}
+              </Text>
+            )}
+            {onVacation && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '3px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  background: '#1677ff',
+                  color: '#fff',
+                }}
+              >
+                В отпуске до {formatDate(employee.profile!.vacationUntil)}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Email */}
-        {employee.profile?.phone && (
-          <div style={{ marginTop: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
-            {employee.profile.phone}
-          </div>
-        )}
-        <div style={{ marginTop: 6, fontSize: 13, color: 'var(--color-text-secondary)' }}>
-          {employee.email}
+        {/* Contacts block */}
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {employee.email && (
+            <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              {employee.email}
+            </Text>
+          )}
+          {employee.profile?.phone && (
+            <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              {employee.profile.phone}
+            </Text>
+          )}
+          {employee.employeeNumber && (
+            <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              {employee.employeeNumber}
+            </Text>
+          )}
+          {employee.managerName && (
+            <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+              Руководитель —{' '}
+              <Text strong style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
+                {employee.managerName}
+              </Text>
+            </Text>
+          )}
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Buttons */}
       <div
         style={{
-          display: 'flex',
-          gap: 8,
-          padding: '10px 16px',
+          display: 'flex', gap: 8, padding: '10px 16px',
           borderTop: '1px solid var(--color-border)',
           background: 'var(--color-bg-card)',
         }}
@@ -233,7 +246,7 @@ function EmployeeCard({ employee }: { employee: OrgEmployee }) {
   );
 }
 
-// ── Draggable Employee Row ────────────────────────────────────────────────────
+// ── EmployeeRow ────────────────────────────────────────────────────────────────
 
 interface EmployeeRowProps {
   employee: OrgEmployee;
@@ -245,10 +258,10 @@ interface EmployeeRowProps {
 function EmployeeRow({ employee, departmentId, isExpanded, onToggle }: EmployeeRowProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: employee.id,
-    data: { departmentId },
+    data: { type: 'employee', departmentId },
   });
 
-  const roleLabel = ROLE_LABELS[employee.role ?? ''] ?? 'Сотрудник';
+  const subtitle = employee.position ?? '';
 
   return (
     <>
@@ -257,12 +270,8 @@ function EmployeeRow({ employee, departmentId, isExpanded, onToggle }: EmployeeR
         style={{
           transform: CSS.Translate.toString(transform),
           opacity: isDragging ? 0.3 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '6px 8px',
-          borderRadius: 8,
-          cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '6px 8px', borderRadius: 8, cursor: 'pointer',
           background: isExpanded ? 'color-mix(in srgb, var(--color-primary-accent) 5%, transparent)' : undefined,
           transition: 'background 0.15s',
         }}
@@ -272,44 +281,68 @@ function EmployeeRow({ employee, departmentId, isExpanded, onToggle }: EmployeeR
         {...attributes}
       >
         <MiniAvatar employee={employee} size={34} />
-
         <div style={{ minWidth: 0, flex: 1 }}>
-          <Text
-            strong
-            style={{
-              fontSize: 14,
-              display: 'block',
-              lineHeight: '20px',
-              color: 'var(--color-text-primary)',
-            }}
-          >
+          <Text strong style={{ fontSize: 14, display: 'block', lineHeight: '20px', color: 'var(--color-text-primary)' }}>
             {employee.firstName} {employee.lastName}
           </Text>
-          <Text
-            style={{
-              fontSize: 12,
-              color: 'var(--color-text-secondary)',
-              display: 'block',
-              lineHeight: '17px',
-            }}
-          >
-            {roleLabel}
-          </Text>
+          {subtitle && (
+            <Text style={{ fontSize: 12, color: 'var(--color-text-secondary)', display: 'block', lineHeight: '17px' }}>
+              {subtitle}
+            </Text>
+          )}
         </div>
       </div>
-
       {isExpanded && <EmployeeCard employee={employee} />}
     </>
   );
 }
 
-// ── Department Accordion ──────────────────────────────────────────────────────
+// ── DeptActionMenu (admin only) ────────────────────────────────────────────────
+
+interface DeptActionsProps {
+  dept: OrgDepartment;
+  onRename: () => void;
+  onDelete: () => void;
+  onAddChild: () => void;
+}
+
+function DeptActionMenu({ dept: _dept, onRename, onDelete, onAddChild }: DeptActionsProps) {
+  return (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: [
+          { key: 'add', label: 'Добавить отдел внутрь', onClick: onAddChild },
+          { key: 'rename', label: 'Переименовать', onClick: onRename },
+          { key: 'delete', label: 'Удалить', danger: true, onClick: onDelete },
+        ],
+      }}
+    >
+      <span
+        className="dept-menu-btn"
+        style={{
+          width: 24, height: 24, borderRadius: 6,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', flexShrink: 0,
+          color: 'var(--color-text-secondary)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MoreOutlined />
+      </span>
+    </Dropdown>
+  );
+}
+
+// ── DepartmentItem ─────────────────────────────────────────────────────────────
 
 interface DepartmentItemProps {
   dept: OrgDepartment;
   depth?: number;
   defaultExpanded?: boolean;
   searchQuery?: string;
+  isAdmin?: boolean;
+  onRefresh?: () => void;
 }
 
 export default function DepartmentItem({
@@ -317,10 +350,22 @@ export default function DepartmentItem({
   depth = 0,
   defaultExpanded = false,
   searchQuery = '',
+  isAdmin = false,
+  onRefresh,
 }: DepartmentItemProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
+
+  // Rename modal state
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameName, setRenameName] = useState(dept.name);
+  const [renameLoading, setRenameLoading] = useState(false);
+
+  // Add child dept modal
+  const [addChildOpen, setAddChildOpen] = useState(false);
+  const [addChildName, setAddChildName] = useState('');
+  const [addChildLoading, setAddChildLoading] = useState(false);
 
   const { isOver, setNodeRef } = useDroppable({ id: dept.id });
 
@@ -329,7 +374,7 @@ export default function DepartmentItem({
 
   const filteredEmployees = searchQuery
     ? employees.filter((e) =>
-        `${e.firstName} ${e.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        `${e.firstName} ${e.lastName} ${e.patronymic ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : employees;
 
@@ -337,125 +382,196 @@ export default function DepartmentItem({
   const isExpanded  = expanded || forceExpand;
 
   const headLabel = depth === 0 ? 'Директор департамента' : 'Руководитель отдела';
-  const headName  = dept.head ? `${dept.head.firstName} ${dept.head.lastName}` : 'не назначен';
+  const headName  = dept.head
+    ? `${dept.head.firstName} ${dept.head.lastName}`
+    : 'не назначен';
+
+  // Admin handlers
+  const handleRename = async () => {
+    if (!renameName.trim()) return;
+    setRenameLoading(true);
+    try {
+      await api.patch(`/departments/${dept.id}`, { name: renameName.trim() });
+      message.success('Отдел переименован');
+      setRenameOpen(false);
+      onRefresh?.();
+    } catch {
+      message.error('Не удалось переименовать');
+    } finally {
+      setRenameLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/departments/${dept.id}`);
+      message.success('Удалено');
+      onRefresh?.();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message ?? 'Не удалось удалить');
+    }
+  };
+
+  const handleAddChild = async () => {
+    if (!addChildName.trim()) return;
+    setAddChildLoading(true);
+    try {
+      await api.post('/departments', { name: addChildName.trim(), parentId: dept.id });
+      message.success('Отдел добавлен');
+      setAddChildOpen(false);
+      setAddChildName('');
+      setExpanded(true);
+      onRefresh?.();
+    } catch {
+      message.error('Не удалось добавить отдел');
+    } finally {
+      setAddChildLoading(false);
+    }
+  };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        marginLeft: depth > 0 ? 28 : 0,
-        borderRadius: 8,
-        background: isOver ? 'color-mix(in srgb, var(--color-primary-accent) 4%, transparent)' : undefined,
-        transition: 'background 0.2s',
-      }}
-    >
-      {/* Department header */}
+    <>
       <div
+        ref={setNodeRef}
         style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 10,
-          padding: '8px 6px',
-          cursor: 'pointer',
-          userSelect: 'none',
+          marginLeft: depth > 0 ? 28 : 0,
           borderRadius: 8,
+          background: isOver ? 'color-mix(in srgb, var(--color-primary-accent) 4%, transparent)' : undefined,
+          transition: 'background 0.2s',
         }}
-        className="dept-row"
-        onClick={() => { setExpanded((v) => !v); }}
       >
-        {/* +/- icon */}
-        <span
+        {/* Department header */}
+        <div
           style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            border: '1px solid var(--color-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            marginTop: 3,
-            color: 'var(--color-text-secondary)',
-            background: 'var(--color-bg-primary)',
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '8px 6px', cursor: 'pointer', userSelect: 'none', borderRadius: 8,
           }}
+          className="dept-row"
+          onClick={() => setExpanded((v) => !v)}
         >
-          {isExpanded
-            ? <MinusOutlined style={{ fontSize: 9 }} />
-            : <PlusOutlined  style={{ fontSize: 9 }} />}
-        </span>
-
-        {/* Name + subtitle */}
-        <div>
-          <Text
-            strong
+          {/* +/- button */}
+          <span
             style={{
-              fontSize: depth === 0 ? 15 : 14,
-              color: 'var(--color-text-primary)',
-              display: 'block',
-              lineHeight: '22px',
-            }}
-          >
-            {dept.name}
-          </Text>
-          <Text
-            style={{
-              fontSize: 12,
+              width: 20, height: 20, borderRadius: '50%',
+              border: '1px solid var(--color-border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, marginTop: 3,
               color: 'var(--color-text-secondary)',
-              display: 'block',
-              lineHeight: '17px',
+              background: 'var(--color-bg-primary)',
             }}
           >
-            {headLabel} — {headName}
-          </Text>
-        </div>
-      </div>
+            {isExpanded
+              ? <MinusOutlined style={{ fontSize: 9 }} />
+              : <PlusOutlined  style={{ fontSize: 9 }} />}
+          </span>
 
-      {/* Expanded content */}
-      {isExpanded && (
-        <div style={{ paddingLeft: 30 }}>
-          {/* Child departments */}
-          {children.map((child) => (
-            <DepartmentItem
-              key={child.id}
-              dept={child}
-              depth={depth + 1}
-              defaultExpanded={false}
-              searchQuery={searchQuery}
+          {/* Name + subtitle */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              strong
+              style={{ fontSize: depth === 0 ? 15 : 14, color: 'var(--color-text-primary)', display: 'block', lineHeight: '22px' }}
+            >
+              {dept.name}
+            </Text>
+            <Text
+              style={{ fontSize: 12, color: 'var(--color-text-secondary)', display: 'block', lineHeight: '17px' }}
+            >
+              {headLabel} — {headName}
+            </Text>
+          </div>
+
+          {/* [...] menu (admin only) */}
+          {isAdmin && (
+            <DeptActionMenu
+              dept={dept}
+              onRename={() => { setRenameName(dept.name); setRenameOpen(true); }}
+              onDelete={handleDelete}
+              onAddChild={() => setAddChildOpen(true)}
             />
-          ))}
-
-          {/* Employee list */}
-          {filteredEmployees.slice(0, visibleCount).map((emp) => (
-            <EmployeeRow
-              key={emp.id}
-              employee={emp}
-              departmentId={dept.id}
-              isExpanded={expandedEmployeeId === emp.id}
-              onToggle={() =>
-                setExpandedEmployeeId((prev) => (prev === emp.id ? null : emp.id))
-              }
-            />
-          ))}
-
-          {/* Load more */}
-          {filteredEmployees.length > visibleCount && (
-            <div style={{ paddingLeft: 46, paddingBottom: 6, paddingTop: 2 }}>
-              <span
-                style={{
-                  fontSize: 13,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textDecorationStyle: 'dotted',
-                }}
-                onClick={(e) => { e.stopPropagation(); setVisibleCount((c) => c + PAGE_INCREMENT); }}
-              >
-                Загрузить ещё {Math.min(filteredEmployees.length - visibleCount, PAGE_INCREMENT)}
-              </span>
-            </div>
           )}
         </div>
-      )}
-    </div>
+
+        {/* Expanded content */}
+        {isExpanded && (
+          <div style={{ paddingLeft: 30 }}>
+            {children.map((child) => (
+              <DepartmentItem
+                key={child.id}
+                dept={child}
+                depth={depth + 1}
+                defaultExpanded={false}
+                searchQuery={searchQuery}
+                isAdmin={isAdmin}
+                onRefresh={onRefresh}
+              />
+            ))}
+
+            {filteredEmployees.slice(0, visibleCount).map((emp) => (
+              <EmployeeRow
+                key={emp.id}
+                employee={emp}
+                departmentId={dept.id}
+                isExpanded={expandedEmployeeId === emp.id}
+                onToggle={() =>
+                  setExpandedEmployeeId((prev) => (prev === emp.id ? null : emp.id))
+                }
+              />
+            ))}
+
+            {filteredEmployees.length > visibleCount && (
+              <div style={{ paddingLeft: 46, paddingBottom: 6, paddingTop: 2 }}>
+                <span
+                  style={{
+                    fontSize: 13, color: 'var(--color-text-secondary)',
+                    cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted',
+                  }}
+                  onClick={(e) => { e.stopPropagation(); setVisibleCount((c) => c + PAGE_INCREMENT); }}
+                >
+                  Загрузить ещё {Math.min(filteredEmployees.length - visibleCount, PAGE_INCREMENT)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Rename modal */}
+      <Modal
+        title="Переименовать"
+        open={renameOpen}
+        onOk={handleRename}
+        onCancel={() => setRenameOpen(false)}
+        confirmLoading={renameLoading}
+        okText="Сохранить"
+        cancelText="Отмена"
+      >
+        <Input
+          value={renameName}
+          onChange={(e) => setRenameName(e.target.value)}
+          onPressEnter={handleRename}
+          placeholder="Название"
+          style={{ marginTop: 8 }}
+        />
+      </Modal>
+
+      {/* Add child dept modal */}
+      <Modal
+        title="Добавить отдел"
+        open={addChildOpen}
+        onOk={handleAddChild}
+        onCancel={() => { setAddChildOpen(false); setAddChildName(''); }}
+        confirmLoading={addChildLoading}
+        okText="Создать"
+        cancelText="Отмена"
+      >
+        <Input
+          value={addChildName}
+          onChange={(e) => setAddChildName(e.target.value)}
+          onPressEnter={handleAddChild}
+          placeholder="Название отдела"
+          style={{ marginTop: 8 }}
+        />
+      </Modal>
+    </>
   );
 }

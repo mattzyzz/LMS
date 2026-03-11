@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Department } from './department.entity';
 import { Position } from './position.entity';
 import { User } from '../users/user.entity';
 import { EmployeeProfile } from '../profiles/employee-profile.entity';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/create-department.dto';
+import { CreateDepartmentDto, UpdateDepartmentDto, MoveDepartmentDto } from './dto/create-department.dto';
 import { PaginationDto, PaginatedResponseDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
@@ -36,32 +36,43 @@ export class DepartmentsService {
     return new PaginatedResponseDto(data, total, pagination);
   }
 
-  async findTree(): Promise<Department[]> {
+  async findTree(): Promise<any[]> {
     // 1) All departments with head user
     const depts = await this.departmentRepository.find({
       relations: ['head'],
-      order: { name: 'ASC' },
+      order: { order: 'ASC', name: 'ASC' },
     });
 
     // 2) All active users (with departmentId)
     const users = await this.userRepository.find({
       where: { isActive: true },
-      select: ['id', 'firstName', 'lastName', 'email', 'avatar', 'role', 'departmentId'],
+      select: [
+        'id', 'firstName', 'lastName', 'patronymic', 'email', 'avatar',
+        'role', 'position', 'employeeNumber', 'managerId', 'departmentId',
+      ],
     });
 
     // 3) All profiles
     const profiles = await this.profileRepository.find({
-      select: ['userId', 'phone', 'availabilityStatus'],
+      select: ['userId', 'phone', 'availabilityStatus', 'vacationUntil'],
     });
 
     // Build lookup maps
     const profileByUserId = new Map(profiles.map((p) => [p.userId, p]));
+    const userById = new Map(users.map((u) => [u.id, u]));
 
-    // Attach profile to each user
-    const enrichedUsers = users.map((u) => ({
-      ...u,
-      profile: profileByUserId.get(u.id) ?? null,
-    }));
+    // Attach profile + managerName to each user
+    const enrichedUsers = users.map((u) => {
+      const manager = u.managerId ? userById.get(u.managerId) : null;
+      const managerName = manager
+        ? [manager.firstName, manager.lastName, manager.patronymic].filter(Boolean).join(' ')
+        : null;
+      return {
+        ...u,
+        managerName,
+        profile: profileByUserId.get(u.id) ?? null,
+      };
+    });
 
     const usersByDeptId = new Map<string, typeof enrichedUsers>();
     for (const u of enrichedUsers) {
@@ -95,7 +106,21 @@ export class DepartmentsService {
       }
     }
 
+    // Sort children by order
+    const sortChildren = (nodes: any[]) => {
+      nodes.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+      nodes.forEach((n) => sortChildren(n.children));
+    };
+    sortChildren(roots);
+
     return roots;
+  }
+
+  async move(id: string, dto: MoveDepartmentDto): Promise<Department> {
+    const dept = await this.findById(id);
+    if (dto.parentId !== undefined) dept.parentId = dto.parentId ?? null;
+    if (dto.order !== undefined) dept.order = dto.order;
+    return this.departmentRepository.save(dept);
   }
 
   async getStats(): Promise<{ totalDepartments: number; totalEmployees: number }> {
