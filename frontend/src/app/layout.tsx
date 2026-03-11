@@ -3,7 +3,6 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import ruRU from 'antd/locale/ru_RU';
 import { ConfigProvider } from 'antd';
 import type { Metadata } from 'next';
-import ThemeProvider from '@/providers/ThemeProvider';
 
 import 'dayjs/locale/ru';
 import './globals.css';
@@ -23,9 +22,7 @@ export default function RootLayout({
       <body>
         <AntdRegistry>
           <ConfigProvider locale={ruRU}>
-            <ThemeProvider>
-              {children}
-            </ThemeProvider>
+            {children}
           </ConfigProvider>
         </AntdRegistry>
       </body>

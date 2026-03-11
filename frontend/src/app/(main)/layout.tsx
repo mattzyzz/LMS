@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
+import ThemeProvider from '@/providers/ThemeProvider';
 import {
   Layout,
   Avatar,
@@ -132,6 +133,7 @@ export default function MainLayout({
   const selectedKey = getSelectedKey();
 
   return (
+    <ThemeProvider>
     <Layout style={{ minHeight: '100vh', background: 'var(--color-bg, #F5F5F5)' }}>
       {/* Sidebar */}
       <Sider
@@ -380,5 +382,6 @@ export default function MainLayout({
         </Content>
       </Layout>
     </Layout>
+    </ThemeProvider>
   );
 }
