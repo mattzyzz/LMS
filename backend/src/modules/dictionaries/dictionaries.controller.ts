@@ -2,7 +2,7 @@ import {
   Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EitherAuthGuard } from '../superadmin/either-auth.guard';
 import { SuperadminAuthGuard } from '../superadmin/superadmin-auth.guard';
 import { DictionariesService } from './dictionaries.service';
 import { DictionaryType } from './dictionary-item.entity';
@@ -19,9 +19,9 @@ import {
 export class DictionariesController {
   constructor(private readonly service: DictionariesService) {}
 
-  // ── Positions (read: any authenticated user; write: superadmin) ──────────
+  // ── Positions (read: any authenticated user or superadmin; write: superadmin) ──
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EitherAuthGuard)
   @ApiBearerAuth()
   @Get('positions')
   findPositions(@Query('all') all?: string) {
@@ -49,9 +49,9 @@ export class DictionariesController {
     return this.service.deactivatePosition(id);
   }
 
-  // ── Generic items (read: authenticated; write: superadmin) ───────────────
+  // ── Generic items (read: authenticated or superadmin; write: superadmin) ──
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EitherAuthGuard)
   @ApiBearerAuth()
   @Get(':type')
   findByType(@Param('type') type: DictionaryType, @Query('all') all?: string) {

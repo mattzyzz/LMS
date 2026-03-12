@@ -2,7 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@n
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ThemeService } from './theme.service';
 import { UpdateThemeDto } from './dto/update-theme.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EitherAuthGuard } from '../superadmin/either-auth.guard';
 import { SuperadminAuthGuard } from '../superadmin/superadmin-auth.guard';
 
 @ApiTags('theme')
@@ -16,8 +16,8 @@ export class ThemeController {
     return this.service.findActive();
   }
 
-  /** Authenticated users can list themes (portal reads configs) */
-  @UseGuards(JwtAuthGuard)
+  /** Authenticated users OR superadmin can list themes */
+  @UseGuards(EitherAuthGuard)
   @ApiBearerAuth()
   @Get()
   findAll() {

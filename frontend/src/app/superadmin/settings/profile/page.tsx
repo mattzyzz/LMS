@@ -6,7 +6,6 @@ import {
   Checkbox, Divider, Tag,
 } from 'antd';
 import superadminApi from '@/lib/superadmin-api';
-import api from '@/lib/api';
 
 const { Title, Text } = Typography;
 
@@ -30,7 +29,7 @@ export default function SuperadminProfilePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/profile-config');
+      const { data } = await superadminApi.get('/profile-config');
       setSections(Array.isArray(data) ? data : []);
     } catch { message.error('Не удалось загрузить настройки'); }
     finally { setLoading(false); }
@@ -69,14 +68,12 @@ export default function SuperadminProfilePage() {
 
   if (loading) return <Spin style={{ display: 'block', margin: '80px auto' }} />;
 
-  const cardStyle = { background: '#1a1a1a', borderColor: '#2a2a2a', borderRadius: 12 };
-
   return (
     <div>
-      <Title level={3} style={{ color: '#fff', marginBottom: 24 }}>Настройки профиля</Title>
+      <Title level={3} style={{ marginBottom: 24 }}>Настройки профиля</Title>
 
-      <Card title={<span style={{ color: '#eee' }}>Разделы профиля сотрудника</span>} style={cardStyle}>
-        <Text style={{ color: '#888', display: 'block', marginBottom: 16, fontSize: 13 }}>
+      <Card title="Разделы профиля сотрудника">
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16, fontSize: 13 }}>
           Управляйте видимостью вкладок и полей в профиле сотрудника.
         </Text>
 
@@ -85,7 +82,7 @@ export default function SuperadminProfilePage() {
             key={section.sectionKey}
             style={{
               padding: '12px 16px', borderRadius: 8, marginBottom: 8,
-              background: '#222', border: '1px solid #333',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -94,7 +91,7 @@ export default function SuperadminProfilePage() {
                 onChange={(v) => handleVisibility(section.sectionKey, v)}
                 size="small"
               />
-              <span style={{ fontWeight: 600, fontSize: 14, color: '#eee' }}>{section.label}</span>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{section.label}</span>
               <Tag color={section.isVisible ? 'success' : 'default'}>
                 {section.isVisible ? 'Видна' : 'Скрыта'}
               </Tag>
@@ -102,8 +99,8 @@ export default function SuperadminProfilePage() {
 
             {section.sectionKey === 'overview' && section.isVisible && (
               <>
-                <Divider style={{ margin: '12px 0', borderColor: '#333' }} />
-                <Text style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 8 }}>
+                <Divider style={{ margin: '12px 0' }} />
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
                   Поля на вкладке:
                 </Text>
                 <Space wrap>
@@ -112,7 +109,6 @@ export default function SuperadminProfilePage() {
                       key={f.key}
                       checked={section.visibleFields.includes(f.key)}
                       onChange={(e) => handleFieldToggle(section.sectionKey, f.key, e.target.checked)}
-                      style={{ color: '#ccc' }}
                     >
                       {f.label}
                     </Checkbox>
@@ -123,9 +119,9 @@ export default function SuperadminProfilePage() {
           </div>
         ))}
 
-        <Divider style={{ borderColor: '#333' }} />
+        <Divider />
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Text style={{ color: '#666', fontSize: 12 }}>Порядок вкладок:</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>Порядок вкладок:</Text>
           {[...sections].sort((a, b) => a.sortOrder - b.sortOrder).map((s, i) => (
             <Space key={s.sectionKey}>
               {i > 0 && (
@@ -134,7 +130,7 @@ export default function SuperadminProfilePage() {
                   [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
                   handleReorder(arr);
                 }}>
-                  ← {s.label}
+                  &larr; {s.label}
                 </Button>
               )}
             </Space>

@@ -7,7 +7,6 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import superadminApi from '@/lib/superadmin-api';
-import api from '@/lib/api';
 
 const { Title } = Typography;
 
@@ -32,7 +31,7 @@ function DictTable({ type, label }: { type: string; label: string }) {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/dictionaries/${type}?all=true`);
+      const { data } = await superadminApi.get(`/dictionaries/${type}?all=true`);
       setItems(Array.isArray(data) ? data : []);
     } catch { message.error('Ошибка загрузки'); }
     finally { setLoading(false); }
@@ -70,7 +69,7 @@ function DictTable({ type, label }: { type: string; label: string }) {
     { title: 'Код', dataIndex: 'code', key: 'code', width: 130, render: (v: string) => <code style={{ fontSize: 12 }}>{v}</code> },
     { title: 'Название', dataIndex: 'label', key: 'label' },
     { title: 'Цвет', dataIndex: 'color', key: 'color', width: 64,
-      render: (v: string | null) => v ? <div style={{ width: 20, height: 20, borderRadius: 4, background: v, border: '1px solid #333' }} /> : '—' },
+      render: (v: string | null) => v ? <div style={{ width: 20, height: 20, borderRadius: 4, background: v, border: '1px solid rgba(255,255,255,0.1)' }} /> : '—' },
     { title: 'Порядок', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
     { title: 'Активен', dataIndex: 'isActive', key: 'isActive', width: 80,
       render: (v: boolean) => <Tag color={v ? 'success' : 'default'}>{v ? 'Да' : 'Нет'}</Tag> },
@@ -88,7 +87,7 @@ function DictTable({ type, label }: { type: string; label: string }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ color: '#888', fontSize: 13 }}>{label}</span>
+        <span style={{ opacity: 0.5, fontSize: 13 }}>{label}</span>
         <Button size="small" icon={<PlusOutlined />} type="primary" onClick={openAdd}>Добавить</Button>
       </div>
       <Table size="small" dataSource={items} columns={columns} rowKey="id" loading={loading} pagination={false} />
@@ -123,7 +122,7 @@ function PositionsTab() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/dictionaries/positions?all=true');
+      const { data } = await superadminApi.get('/dictionaries/positions?all=true');
       setPositions(Array.isArray(data) ? data : []);
     } catch { message.error('Ошибка загрузки'); }
     finally { setLoading(false); }
@@ -178,7 +177,7 @@ function PositionsTab() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ color: '#888', fontSize: 13 }}>Справочник должностей компании</span>
+        <span style={{ opacity: 0.5, fontSize: 13 }}>Справочник должностей компании</span>
         <Button size="small" icon={<PlusOutlined />} type="primary" onClick={openAdd}>Добавить</Button>
       </div>
       <Table size="small" dataSource={positions} columns={columns} rowKey="id" loading={loading} pagination={false} />
@@ -199,8 +198,8 @@ function PositionsTab() {
 export default function SuperadminDictionariesPage() {
   return (
     <div>
-      <Title level={3} style={{ color: '#fff', marginBottom: 24 }}>Справочники</Title>
-      <Card style={{ background: '#1a1a1a', borderColor: '#2a2a2a', borderRadius: 12 }}>
+      <Title level={3} style={{ marginBottom: 24 }}>Справочники</Title>
+      <Card>
         <Tabs items={[
           { key: 'positions',          label: 'Должности',           children: <PositionsTab /> },
           { key: 'skill_level',        label: 'Уровни навыков',      children: <DictTable type="skill_level" label="Уровни в профиле сотрудника" /> },

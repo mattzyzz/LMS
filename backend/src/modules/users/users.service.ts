@@ -37,6 +37,7 @@ export class UsersService {
       isActive: dto.isActive ?? true,
       departmentId: dto.departmentId ?? null,
       position: dto.position ?? null,
+      positionId: dto.positionId ?? null,
       employeeNumber: dto.employeeNumber ?? null,
       managerId: dto.managerId ?? null,
     });

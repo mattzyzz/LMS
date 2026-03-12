@@ -3,19 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import {
   Card, Tabs, Form, Input, InputNumber, Button, Space, message,
-  ColorPicker, Divider, Typography, Spin, Row, Col, Tooltip, Tag, Popconfirm,
+  ColorPicker, Divider, Typography, Spin, Row, Col, Popconfirm,
 } from 'antd';
 import type { Color } from 'antd/es/color-picker';
 import { SaveOutlined, CheckCircleOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import superadminApi from '@/lib/superadmin-api';
-import api from '@/lib/api';
 import { useThemeStore, ThemeConfig } from '@/stores/theme.store';
 
 const { Title, Text } = Typography;
 
 type ColorKey = keyof ThemeConfig;
 
-// Fields that are safe to send to the API (UpdateThemeDto fields only)
 const DTO_FIELDS: (keyof ThemeConfig)[] = [
   'brandName','logoUrl','faviconUrl',
   'colorPrimary','colorSecondary','colorAccent','colorBackground','colorSurface',
@@ -38,10 +36,8 @@ function toPayload(editing: ThemeConfig): Partial<ThemeConfig> {
   return payload;
 }
 
-// Extract hex string from Ant Design ColorPicker value
 function colorToHex(val: string | Color): string {
   if (typeof val === 'string') return val;
-  // Ant Design Color object
   if (typeof (val as any).toHexString === 'function') {
     return (val as any).toHexString();
   }
@@ -108,7 +104,7 @@ function ColorField({ value, onChange, label }: { value: string; onChange: (v: s
         size="small"
       />
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>{label}</div>
+        <div style={{ fontSize: 11, opacity: 0.5, marginBottom: 2 }}>{label}</div>
         <Input
           size="small"
           value={value}
@@ -134,8 +130,7 @@ export default function SuperadminThemePage() {
   const load = async () => {
     setLoading(true);
     try {
-      // Use regular api for reading (requires user JWT)
-      const { data } = await api.get('/theme');
+      const { data } = await superadminApi.get('/theme');
       setThemes(data);
       const active = data.find((t: ThemeConfig) => t.isActive) ?? data[0];
       if (active) setEditing({ ...active });
@@ -191,40 +186,39 @@ export default function SuperadminThemePage() {
     setEditing((prev) => prev ? { ...prev, [key]: value } : prev);
   };
 
-  const cardStyle = { background: '#1a1a1a', borderColor: '#2a2a2a', borderRadius: 12 };
-
   if (loading) return <Spin style={{ display: 'block', margin: '80px auto' }} />;
   if (!editing) return null;
 
   return (
     <div>
-      <Title level={3} style={{ color: '#fff', marginBottom: 24 }}>Тема и брендинг</Title>
+      <Title level={3} style={{ marginBottom: 24 }}>Тема и брендинг</Title>
 
       <Row gutter={[24, 24]}>
         {/* Theme list */}
         <Col xs={24} lg={6}>
-          <Card title={<span style={{ color: '#fff' }}>Темы</span>} size="small" style={cardStyle}>
+          <Card title="Темы" size="small">
             {themes.map((t) => (
               <div
                 key={t.id}
                 style={{
                   padding: '8px 12px', borderRadius: 8, marginBottom: 6, cursor: 'pointer',
-                  background: editing.id === t.id ? 'rgba(229,35,34,0.12)' : '#222',
-                  border: `1px solid ${t.isActive ? '#E52322' : '#333'}`,
+                  background: editing.id === t.id ? 'rgba(229,35,34,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${t.isActive ? '#E52322' : 'rgba(255,255,255,0.1)'}`,
                 }}
                 onClick={() => setEditing({ ...t })}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ color: '#eee', fontSize: 13, fontWeight: 600 }}>{t.brandName}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: 600 }}>{t.brandName}</Text>
                   {t.isActive && <CheckCircleOutlined style={{ color: '#E52322' }} />}
                 </div>
                 <Space size={4} style={{ marginTop: 6 }}>
-                  <Button size="small" onClick={(e) => { e.stopPropagation(); handleActivate(t.id); }}
-                    disabled={t.isActive}
-                    style={t.isActive ? { background: '#E52322', borderColor: '#E52322', color: '#fff' } : {}}>
+                  <Button size="small" type={t.isActive ? 'primary' : 'default'}
+                    onClick={(e) => { e.stopPropagation(); handleActivate(t.id); }}
+                    disabled={t.isActive}>
                     {t.isActive ? 'Активна' : 'Активировать'}
                   </Button>
-                  <Button size="small" icon={<CopyOutlined />} onClick={(e) => { e.stopPropagation(); handleDuplicate(t.id); }} />
+                  <Button size="small" icon={<CopyOutlined />}
+                    onClick={(e) => { e.stopPropagation(); handleDuplicate(t.id); }} />
                   {!t.isActive && (
                     <Popconfirm
                       title="Удалить тему?"
@@ -238,11 +232,13 @@ export default function SuperadminThemePage() {
                 </Space>
               </div>
             ))}
-            <Button block type="dashed" style={{ marginTop: 8, borderColor: '#444', color: '#aaa' }}
+            <Button block type="dashed" style={{ marginTop: 8 }}
               onClick={async () => {
-                const { data } = await superadminApi.post('/theme', { brandName: 'Новая тема' });
-                setThemes((prev) => [...prev, data]);
-                setEditing({ ...data });
+                try {
+                  const { data } = await superadminApi.post('/theme', { brandName: 'Новая тема' });
+                  setThemes((prev) => [...prev, data]);
+                  setEditing({ ...data });
+                } catch { message.error('Ошибка создания темы'); }
               }}>
               + Новая тема
             </Button>
@@ -252,14 +248,12 @@ export default function SuperadminThemePage() {
         {/* Editor */}
         <Col xs={24} lg={18}>
           <Card
-            title={<span style={{ color: '#fff' }}>Редактирование: {editing.brandName}</span>}
+            title={`Редактирование: ${editing.brandName}`}
             extra={
-              <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}
-                style={{ background: '#E52322', borderColor: '#E52322' }}>
+              <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
                 Сохранить
               </Button>
             }
-            style={cardStyle}
           >
             <Tabs
               items={[
@@ -270,23 +264,23 @@ export default function SuperadminThemePage() {
                     <Row gutter={24}>
                       <Col xs={24} md={12}>
                         <Form layout="vertical">
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Название бренда</span>}>
+                          <Form.Item label="Название бренда">
                             <Input value={editing.brandName} onChange={(e) => setField('brandName', e.target.value)} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>URL логотипа</span>}>
+                          <Form.Item label="URL логотипа">
                             <Input value={editing.logoUrl ?? ''} onChange={(e) => setField('logoUrl', e.target.value || null)} placeholder="https://..." />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>URL favicon</span>}>
+                          <Form.Item label="URL favicon">
                             <Input value={editing.faviconUrl ?? ''} onChange={(e) => setField('faviconUrl', e.target.value || null)} placeholder="https://..." />
                           </Form.Item>
                         </Form>
                       </Col>
                       <Col xs={24} md={12}>
                         <div style={{
-                          border: '1px solid #333', borderRadius: 12, padding: 24,
+                          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 24,
                           background: editing.sidebarBg,
                         }}>
-                          <Text style={{ color: '#888', fontSize: 12 }}>Предпросмотр логотипа</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>Предпросмотр логотипа</Text>
                           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
                             {editing.logoUrl ? (
                               <img src={editing.logoUrl} alt="logo" style={{ height: 40, maxWidth: 120, objectFit: 'contain' }} />
@@ -317,7 +311,7 @@ export default function SuperadminThemePage() {
                     <Row gutter={24}>
                       {COLOR_GROUPS.map((g) => (
                         <Col xs={24} md={12} key={g.group}>
-                          <Divider orientation="left" style={{ fontSize: 12, color: '#666' }}>{g.group}</Divider>
+                          <Divider orientation="left" style={{ fontSize: 12 }}>{g.group}</Divider>
                           {g.fields.map((f) => (
                             <ColorField
                               key={String(f.key)}
@@ -338,27 +332,27 @@ export default function SuperadminThemePage() {
                     <Form layout="vertical">
                       <Row gutter={24}>
                         <Col xs={24} md={12}>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Шрифт (base)</span>}>
+                          <Form.Item label="Шрифт (base)">
                             <Input value={editing.fontFamilyBase} onChange={(e) => setField('fontFamilyBase', e.target.value)} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Шрифт заголовков</span>}>
+                          <Form.Item label="Шрифт заголовков">
                             <Input value={editing.fontFamilyHeading ?? ''} onChange={(e) => setField('fontFamilyHeading', e.target.value || null)} placeholder="Inherit from base" />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Размер шрифта (px)</span>}>
+                          <Form.Item label="Размер шрифта (px)">
                             <InputNumber min={10} max={24} value={editing.fontSizeBase} onChange={(v) => setField('fontSizeBase', v)} style={{ width: '100%' }} />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Normal weight</span>}>
+                          <Form.Item label="Normal weight">
                             <InputNumber min={100} max={900} step={100} value={editing.fontWeightNormal} onChange={(v) => setField('fontWeightNormal', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Medium weight</span>}>
+                          <Form.Item label="Medium weight">
                             <InputNumber min={100} max={900} step={100} value={editing.fontWeightMedium} onChange={(v) => setField('fontWeightMedium', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Bold weight</span>}>
+                          <Form.Item label="Bold weight">
                             <InputNumber min={100} max={900} step={100} value={editing.fontWeightBold} onChange={(v) => setField('fontWeightBold', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Высота строки</span>}>
+                          <Form.Item label="Высота строки">
                             <InputNumber min={1} max={3} step={0.1} value={Number(editing.lineHeightBase)} onChange={(v) => setField('lineHeightBase', v)} style={{ width: '100%' }} />
                           </Form.Item>
                         </Col>
@@ -373,29 +367,29 @@ export default function SuperadminThemePage() {
                     <Form layout="vertical">
                       <Row gutter={24}>
                         <Col xs={24} md={12}>
-                          <Divider orientation="left" style={{ fontSize: 12, color: '#666' }}>Отступы</Divider>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Базовая единица (px)</span>}>
+                          <Divider orientation="left" style={{ fontSize: 12 }}>Отступы</Divider>
+                          <Form.Item label="Базовая единица (px)">
                             <InputNumber min={4} max={16} value={editing.spacingUnit} onChange={(v) => setField('spacingUnit', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Padding карточки (px)</span>}>
+                          <Form.Item label="Padding карточки (px)">
                             <InputNumber min={8} max={48} value={editing.spacingCardPadding} onChange={(v) => setField('spacingCardPadding', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Gap в карточке (px)</span>}>
+                          <Form.Item label="Gap в карточке (px)">
                             <InputNumber min={4} max={32} value={editing.spacingCardGap} onChange={(v) => setField('spacingCardGap', v)} style={{ width: '100%' }} />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
-                          <Divider orientation="left" style={{ fontSize: 12, color: '#666' }}>Скругления</Divider>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>SM (px)</span>}>
+                          <Divider orientation="left" style={{ fontSize: 12 }}>Скругления</Divider>
+                          <Form.Item label="SM (px)">
                             <InputNumber min={0} max={24} value={editing.borderRadiusSm} onChange={(v) => setField('borderRadiusSm', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>MD (px)</span>}>
+                          <Form.Item label="MD (px)">
                             <InputNumber min={0} max={24} value={editing.borderRadiusMd} onChange={(v) => setField('borderRadiusMd', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>LG (px)</span>}>
+                          <Form.Item label="LG (px)">
                             <InputNumber min={0} max={32} value={editing.borderRadiusLg} onChange={(v) => setField('borderRadiusLg', v)} style={{ width: '100%' }} />
                           </Form.Item>
-                          <Form.Item label={<span style={{ color: '#ccc' }}>Card (px)</span>}>
+                          <Form.Item label="Card (px)">
                             <InputNumber min={0} max={32} value={editing.borderRadiusCard} onChange={(v) => setField('borderRadiusCard', v)} style={{ width: '100%' }} />
                           </Form.Item>
                         </Col>
@@ -408,20 +402,20 @@ export default function SuperadminThemePage() {
                   label: 'Тени',
                   children: (
                     <Form layout="vertical">
-                      <Form.Item label={<span style={{ color: '#ccc' }}>Тень SM</span>}>
+                      <Form.Item label="Тень SM">
                         <Input value={editing.shadowSm} onChange={(e) => setField('shadowSm', e.target.value)} />
                       </Form.Item>
-                      <Form.Item label={<span style={{ color: '#ccc' }}>Тень MD</span>}>
+                      <Form.Item label="Тень MD">
                         <Input value={editing.shadowMd} onChange={(e) => setField('shadowMd', e.target.value)} />
                       </Form.Item>
-                      <Form.Item label={<span style={{ color: '#ccc' }}>Тень LG</span>}>
+                      <Form.Item label="Тень LG">
                         <Input value={editing.shadowLg} onChange={(e) => setField('shadowLg', e.target.value)} />
                       </Form.Item>
                       <Divider />
                       <Space>
                         {['SM','MD','LG'].map((s, i) => (
                           <div key={s} style={{
-                            width: 80, height: 80, background: '#fff', borderRadius: 8,
+                            width: 80, height: 80, background: '#333', borderRadius: 8,
                             boxShadow: [editing.shadowSm, editing.shadowMd, editing.shadowLg][i],
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, IsUUID, IsIn } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString, IsUUID, IsIn } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateUserDto {
@@ -17,6 +17,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   patronymic?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -38,6 +43,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   position?: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsUUID('all')
+  @Transform(({ value }) => value === null ? null : value)
+  positionId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

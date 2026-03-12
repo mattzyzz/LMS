@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EitherAuthGuard } from '../superadmin/either-auth.guard';
 import { SuperadminAuthGuard } from '../superadmin/superadmin-auth.guard';
 import { OrgStructureConfigService } from './org-structure-config.service';
 import { OrgStructureConfig } from './org-structure-config.entity';
@@ -10,7 +10,7 @@ import { OrgStructureConfig } from './org-structure-config.entity';
 export class OrgStructureConfigController {
   constructor(private readonly service: OrgStructureConfigService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EitherAuthGuard)
   @ApiBearerAuth()
   @Get()
   getDefault() {
