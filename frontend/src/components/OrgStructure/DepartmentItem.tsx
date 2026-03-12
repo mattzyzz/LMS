@@ -267,7 +267,7 @@ function EmployeeRow({ employee, departmentId, isExpanded, onToggle, isAdmin, on
           transform: CSS.Translate.toString(transform),
           opacity: isDragging ? 0.3 : 1,
           display: 'flex', alignItems: 'center', gap: 10,
-          padding: '5px 8px 5px 4px', borderRadius: 6,
+          padding: '8px 8px 8px 4px', borderRadius: 6,
           background: isExpanded ? '#f0f4ff' : hovered ? '#f7f7f7' : 'transparent',
           transition: 'background 0.12s',
           cursor: 'pointer', userSelect: 'none',
@@ -322,7 +322,16 @@ function EmployeeRow({ employee, departmentId, isExpanded, onToggle, isAdmin, on
         </div>
       </div>
 
-      {isExpanded && <EmployeeCard employee={employee} />}
+      <div
+        style={{
+          overflow: 'hidden',
+          maxHeight: isExpanded ? 600 : 0,
+          opacity: isExpanded ? 1 : 0,
+          transition: 'max-height 0.2s ease, opacity 0.2s ease',
+        }}
+      >
+        {isExpanded && <EmployeeCard employee={employee} />}
+      </div>
     </>
   );
 }
@@ -515,10 +524,10 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
 
           {/* Name + subtitle */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: depth === 0 ? 16 : 15, fontWeight: 600, color: '#1a1a1a', lineHeight: '22px' }}>
+            <div style={{ fontSize: depth === 0 ? 17 : 15, fontWeight: 600, color: '#1a1a1a', lineHeight: '22px' }}>
               {dept.name}
             </div>
-            <div style={{ fontSize: 12, color: '#8c8c8c', lineHeight: '17px' }}>
+            <div style={{ fontSize: 13, color: '#8c8c8c', lineHeight: '18px' }}>
               {dept.head
                 ? `${headLabel} — ${dept.head.firstName} ${dept.head.lastName}`
                 : `${headLabel} не назначен`}
