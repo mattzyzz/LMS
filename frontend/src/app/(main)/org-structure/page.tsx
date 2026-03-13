@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Col, Form, Input, Modal, Row, Select, Spin, Typography, message } from 'antd';
-import { PlusOutlined, SearchOutlined, UserAddOutlined } from '@ant-design/icons';
+import { Button, Col, Form, Input, Modal, Row, Select, Spin, message } from 'antd';
+import { PlusOutlined, UserAddOutlined } from '@ant-design/icons';
 import {
   DndContext,
   DragEndEvent,
@@ -16,8 +16,6 @@ import {
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import DepartmentItem, { OrgDepartment, OrgEmployee } from '@/components/OrgStructure/DepartmentItem';
-
-const { Title, Text } = Typography;
 
 interface OrgStats {
   totalDepartments: number;
@@ -85,12 +83,10 @@ export default function OrgStructurePage() {
   const [search, setSearch] = useState('');
   const [draggingEmployee, setDraggingEmployee] = useState<OrgEmployee | null>(null);
 
-  // Add root dept modal
   const [addDeptOpen, setAddDeptOpen] = useState(false);
   const [addDeptName, setAddDeptName] = useState('');
   const [addDeptLoading, setAddDeptLoading] = useState(false);
 
-  // Create employee modal
   const [createEmpOpen, setCreateEmpOpen] = useState(false);
   const [createEmpLoading, setCreateEmpLoading] = useState(false);
   const [deptOptions, setDeptOptions] = useState<{ value: string; label: string }[]>([]);
@@ -148,7 +144,6 @@ export default function OrgStructurePage() {
 
   const openCreateEmp = async () => {
     setCreateEmpOpen(true);
-    // Build flat list of depts for select
     const flatDepts: { value: string; label: string }[] = [];
     const flatten = (nodes: OrgDepartment[], prefix = '') => {
       nodes.forEach((d) => {
@@ -192,42 +187,90 @@ export default function OrgStructurePage() {
     }
   };
 
+  const handleSearch = () => {
+    // search is already reactive via state
+  };
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>
+      {/* ── Header band ─────────────────────────────────────────── */}
+      <div style={{
+        background: '#f8f8f8',
+        margin: '-32px -32px 0 -32px',
+        padding: '32px 32px 32px',
+      }}>
+        {/* Breadcrumb */}
+        <div style={{ marginBottom: 20, fontSize: 14, color: '#75757d' }}>
+          <span style={{ cursor: 'pointer' }}>← структура</span>
+        </div>
+
+        {/* Company title */}
+        <h1 style={{
+          fontSize: 32,
+          fontWeight: 700,
+          lineHeight: '42px',
+          color: 'var(--color-primary, #ef3124)',
+          margin: '0 0 24px 0',
+        }}>
           Организационная структура
-        </Title>
+        </h1>
+
+        {/* Search + button */}
+        <div style={{ display: 'flex', gap: 16, maxWidth: 860, alignItems: 'stretch' }}>
+          <Input
+            placeholder="Поиск сотрудника или отдела…"
+            allowClear
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{
+              flex: 1,
+              height: 48,
+              borderRadius: 8,
+              fontSize: 16,
+              border: '1px solid #d5d6dc',
+            }}
+          />
+          <Button
+            type="primary"
+            style={{
+              height: 48,
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 600,
+              padding: '0 24px',
+              background: 'var(--color-primary, #ef3124)',
+              borderColor: 'var(--color-primary, #ef3124)',
+            }}
+            onClick={handleSearch}
+          >
+            Найти
+          </Button>
+        </div>
+
+        {/* Admin buttons */}
         {isAdmin && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button icon={<UserAddOutlined />} onClick={openCreateEmp}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <Button size="small" icon={<UserAddOutlined />} onClick={openCreateEmp}>
               Новый сотрудник
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddDeptOpen(true)}>
+            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => setAddDeptOpen(true)}>
               Новый департамент
             </Button>
           </div>
         )}
       </div>
 
-      <Row gutter={[40, 24]}>
-        {/* ── Left: tree ─────────────────────────────────── */}
-        <Col xs={24} lg={17}>
-          <Input
-            prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
-            placeholder="Поиск сотрудника или отдела…"
-            allowClear
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ marginBottom: 24, borderRadius: 8 }}
-          />
-
+      {/* ── Content area ────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 40, marginTop: 32 }}>
+        {/* Left: tree */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <Spin size="large" />
             </div>
           ) : tree.length === 0 ? (
-            <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            <div style={{ padding: '60px 0', textAlign: 'center', color: '#75757d' }}>
               Нет данных об организационной структуре
             </div>
           ) : (
@@ -237,75 +280,84 @@ export default function OrgStructurePage() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              {tree.map((dept) => (
-                <DepartmentItem
-                  key={dept.id}
-                  dept={dept}
-                  depth={0}
-                  defaultExpanded={true}
-                  searchQuery={search}
-                  isAdmin={isAdmin}
-                  onRefresh={load}
-                />
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {tree.map((dept) => (
+                  <DepartmentItem
+                    key={dept.id}
+                    dept={dept}
+                    depth={0}
+                    defaultExpanded={true}
+                    searchQuery={search}
+                    isAdmin={isAdmin}
+                    onRefresh={load}
+                  />
+                ))}
+              </div>
 
               <DragOverlay dropAnimation={null}>
                 {draggingEmployee && (
-                  <div
-                    style={{
-                      background: 'var(--color-bg-card)',
-                      border: '1px solid var(--color-primary-accent)',
-                      borderRadius: 8,
-                      padding: '6px 16px',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                      color: 'var(--color-text-primary)',
-                      cursor: 'grabbing',
-                    }}
-                  >
-                    {draggingEmployee.firstName} {draggingEmployee.lastName}
+                  <div style={{
+                    background: '#fdfcfc',
+                    border: '1px solid var(--color-primary, #ef3124)',
+                    borderRadius: 8,
+                    padding: '6px 16px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    color: '#0e0e0e',
+                    cursor: 'grabbing',
+                  }}>
+                    {draggingEmployee.lastName} {draggingEmployee.firstName}
                   </div>
                 )}
               </DragOverlay>
             </DndContext>
           )}
-        </Col>
+        </div>
 
-        {/* ── Right: stats sidebar ───────────────────────── */}
-        <Col xs={24} lg={7}>
+        {/* Right: sidebar */}
+        <div style={{ width: 312, flexShrink: 0 }}>
           <div style={{ position: 'sticky', top: 80 }}>
             {stats && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
-                  <Text strong style={{ fontSize: 22, color: 'var(--color-primary-accent)' }}>
+              <div style={{
+                background: '#fdfcfc',
+                border: '1px solid #e7e8ea',
+                borderRadius: 8,
+                padding: 24,
+              }}>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: '#0e0e0e', lineHeight: '36px' }}>
                     {stats.totalEmployees}
-                  </Text>
-                  <Text style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                  </div>
+                  <div style={{ fontSize: 14, color: '#75757d', lineHeight: '24px' }}>
                     сотрудников в компании
-                  </Text>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <Text strong style={{ fontSize: 22, color: 'var(--color-primary-accent)' }}>
+                <div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: '#0e0e0e', lineHeight: '36px' }}>
                     {stats.totalDepartments}
-                  </Text>
-                  <Text style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                  </div>
+                  <div style={{ fontSize: 14, color: '#75757d', lineHeight: '24px' }}>
                     отделов и департаментов
-                  </Text>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
-              <Text style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: '18px' }}>
-                {isAdmin
-                  ? 'Наведите на отдел для управления. Перетащите сотрудника, чтобы изменить принадлежность.'
-                  : 'Перетащите сотрудника из одного отдела в другой, чтобы изменить его принадлежность. Нажмите на имя сотрудника, чтобы открыть карточку.'}
-              </Text>
+            <div style={{
+              marginTop: 16,
+              padding: '12px 0',
+              fontSize: 13,
+              color: '#75757d',
+              lineHeight: '20px',
+            }}>
+              {isAdmin
+                ? 'Наведите на отдел для управления. Перетащите сотрудника, чтобы изменить принадлежность.'
+                : 'Нажмите на имя сотрудника, чтобы открыть карточку. Перетащите для смены отдела.'}
             </div>
           </div>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       {/* Create employee modal */}
       <Modal
@@ -389,10 +441,8 @@ export default function OrgStructurePage() {
       </Modal>
 
       <style>{`
-        .dept-row:hover { background: #f7f7f7 !important; }
         .dept-row:hover .dept-menu-btn { opacity: 1 !important; }
         .dept-menu-btn { opacity: 0; transition: opacity 0.12s; }
-        button:hover { border-color: #999 !important; }
       `}</style>
     </div>
   );

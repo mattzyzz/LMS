@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dropdown, Typography, Modal, Input, Select, Popconfirm, message } from 'antd';
+import { Dropdown, Modal, Input, Select, Popconfirm, message } from 'antd';
 import {
   PlusOutlined,
   MinusOutlined,
-  MailOutlined,
   UserOutlined,
   MoreOutlined,
   UserAddOutlined,
@@ -15,10 +14,9 @@ import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import api from '@/lib/api';
 
-const { Text } = Typography;
-
 const PAGE_SIZE = 10;
 const PAGE_INCREMENT = 50;
+const INDENT = 64; // px per depth level
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -53,7 +51,6 @@ export interface OrgDepartment {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-// Colors are resolved at runtime via CSS vars (set by ThemeProvider)
 function getStatusDotColor(status: string): string {
   if (typeof window === 'undefined') {
     const defaults: Record<string, string> = {
@@ -73,23 +70,15 @@ function getStatusDotColor(status: string): string {
   return val || '#c8c8c8';
 }
 
-// Avatar palette — first slot updated at render time from CSS var
-const AVATAR_PALETTE_BASE = ['#E52322', '#1677ff', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96'];
-function getAvatarPalette(): string[] {
-  if (typeof window === 'undefined') return AVATAR_PALETTE_BASE;
-  const primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
-  return primary ? [primary, ...AVATAR_PALETTE_BASE.slice(1)] : AVATAR_PALETTE_BASE;
-}
-
+const AVATAR_PALETTE = ['#ee4564', '#5890ce', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96'];
 function avatarColor(name: string) {
-  const palette = getAvatarPalette();
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return palette[Math.abs(h) % palette.length];
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
 }
 
 function initials(first: string, last: string) {
-  return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase();
+  return `${(first[0] ?? '').toUpperCase()}${(last[0] ?? '').toUpperCase()}`;
 }
 
 function formatDate(raw: string | null | undefined): string {
@@ -99,160 +88,159 @@ function formatDate(raw: string | null | undefined): string {
   return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// ── PersonInCircleIcon — точно как на скриншоте ────────────────────────────────
-function PersonInCircleIcon({ size = 16, color = '#555' }: { size?: number; color?: string }) {
+function displayName(emp: { firstName: string; lastName: string; patronymic?: string | null }, full = false) {
+  if (full) return [emp.lastName, emp.firstName, emp.patronymic].filter(Boolean).join(' ');
+  return `${emp.lastName} ${emp.firstName}`;
+}
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
+
+function PersonProfileIcon({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="8" cy="8" r="7" stroke={color} strokeWidth="1.2"/>
-      <circle cx="8" cy="6" r="2.2" stroke={color} strokeWidth="1.2"/>
-      <path d="M3.5 13c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
 
-// ── EnvelopeIcon — точно как на скриншоте ─────────────────────────────────────
-function EnvelopeIcon({ size = 14, color = '#555' }: { size?: number; color?: string }) {
+function EmailIcon({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0.6" y="0.6" width="12.8" height="10.8" rx="1.4" stroke={color} strokeWidth="1.2"/>
-      <path d="M1 1.5l6 4.5 6-4.5" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 7l9 6 9-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// ── EmployeeCard — точно по скриншоту ─────────────────────────────────────────
+// ── EmployeeCard ──────────────────────────────────────────────────────────────
 
 function EmployeeCard({ employee }: { employee: OrgEmployee }) {
-  const status     = employee.profile?.availabilityStatus ?? 'offline';
-  const bg         = avatarColor(employee.firstName + employee.lastName);
+  const status = employee.profile?.availabilityStatus ?? 'offline';
+  const bg = avatarColor(employee.firstName + employee.lastName);
   const onVacation = status === 'on_leave' && employee.profile?.vacationUntil;
-  const fullName   = [employee.firstName, employee.lastName, employee.patronymic].filter(Boolean).join(' ');
-  const position   = employee.position ?? '';
+  const fullName = displayName(employee, true);
+  const position = employee.position ?? '';
 
   return (
-    <div
-      style={{
-        margin: '4px 0 12px 36px',
-        border: '1px solid #e8e8e8',
-        borderRadius: 8,
-        background: '#fff',
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Card body */}
-      <div style={{ padding: '14px 16px 14px' }}>
-        {/* Avatar row */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
-          {/* Avatar circle */}
-          <div style={{
-            width: 60, height: 60, borderRadius: '50%', background: bg, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '0.5px',
-          }}>
-            {employee.avatar
-              ? <img src={employee.avatar} alt="" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover' }} />
-              : initials(employee.firstName, employee.lastName)
-            }
+    <div style={{
+      maxWidth: 640,
+      border: '1px solid #e7e8ea',
+      borderRadius: 4,
+      background: '#fdfcfc',
+      padding: 24,
+      marginTop: 12,
+    }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        {/* Avatar */}
+        <div style={{
+          width: 64, height: 64, borderRadius: 32, flexShrink: 0,
+          background: bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, fontWeight: 700, color: '#fff',
+        }}>
+          {employee.avatar
+            ? <img src={employee.avatar} alt="" style={{ width: 64, height: 64, borderRadius: 32, objectFit: 'cover' }} />
+            : initials(employee.firstName, employee.lastName)
+          }
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, lineHeight: '28px', color: '#0e0e0e' }}>
+            {fullName}
           </div>
 
-          {/* Name + position + badge */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 600, lineHeight: '24px', color: '#1a1a1a', marginBottom: 2 }}>
-              {fullName}
-            </div>
+          <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {position && (
-              <div style={{ fontSize: 13, color: '#8c8c8c', lineHeight: '18px', marginBottom: onVacation ? 8 : 0 }}>
+              <div style={{ fontSize: 16, color: '#75757d', lineHeight: '24px' }}>
                 {position}
               </div>
             )}
             {onVacation && (
-              <span style={{
-                display: 'inline-block', padding: '2px 10px', borderRadius: 10,
-                fontSize: 12, fontWeight: 500,
-                background: 'var(--color-status-on-leave, #1677ff)', color: '#fff',
-                lineHeight: '20px',
-              }}>
-                В отпуске до {formatDate(employee.profile!.vacationUntil)}
-              </span>
+              <div>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '6px 16px',
+                  borderRadius: 100,
+                  background: '#5890ce',
+                  color: '#fff',
+                  fontSize: 14,
+                  lineHeight: '18px',
+                }}>
+                  В отпуске до {formatDate(employee.profile!.vacationUntil)}
+                </span>
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: '#f0f0f0', marginBottom: 10 }} />
+          {/* Contacts */}
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {employee.email && (
+              <div style={{ fontSize: 16, color: '#75757d', lineHeight: '24px' }}>{employee.email}</div>
+            )}
+            {employee.profile?.phone && (
+              <div style={{ fontSize: 16, color: '#75757d', lineHeight: '24px' }}>{employee.profile.phone}</div>
+            )}
+            {employee.employeeNumber && (
+              <div style={{ fontSize: 16, color: '#75757d', lineHeight: '24px' }}>{employee.employeeNumber}</div>
+            )}
+          </div>
 
-        {/* Contacts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {employee.email && (
-            <div style={{ fontSize: 13, color: '#595959', lineHeight: '20px' }}>{employee.email}</div>
-          )}
-          {employee.profile?.phone && (
-            <div style={{ fontSize: 13, color: '#595959', lineHeight: '20px' }}>{employee.profile.phone}</div>
-          )}
-          {employee.employeeNumber && (
-            <div style={{ fontSize: 13, color: '#595959', lineHeight: '20px' }}>{employee.employeeNumber}</div>
-          )}
+          {/* Manager */}
           {employee.managerName && (
-            <div style={{ fontSize: 13, color: '#8c8c8c', lineHeight: '20px' }}>
+            <div style={{ fontSize: 16, color: '#75757d', lineHeight: '24px', marginTop: 4 }}>
               Руководитель —{' '}
-              <span style={{ fontWeight: 600, color: '#1a1a1a' }}>{employee.managerName}</span>
+              <span style={{ color: '#0e0e0e' }}>{employee.managerName}</span>
             </div>
           )}
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
+            <Link href={`/profile/${employee.id}`} style={{ textDecoration: 'none' }}>
+              <button style={{
+                height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 4, background: '#f2f3f5', border: 'none', borderRadius: 2,
+                padding: '0 28px', cursor: 'pointer', fontSize: 16, fontWeight: 600,
+                color: '#0e0e0e', fontFamily: 'inherit',
+              }}>
+                <PersonProfileIcon size={24} />
+                Посмотреть профиль
+              </button>
+            </Link>
+            <a href={`mailto:${employee.email}`} title="Написать">
+              <button style={{
+                width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#f2f3f5', border: 'none', borderRadius: 2,
+                cursor: 'pointer', color: '#0e0e0e',
+              }}>
+                <EmailIcon size={24} />
+              </button>
+            </a>
+          </div>
         </div>
-      </div>
-
-      {/* Buttons footer */}
-      <div style={{
-        display: 'flex', gap: 8, padding: '10px 12px',
-        borderTop: '1px solid #f0f0f0',
-        background: '#fff',
-      }}>
-        {/* Посмотреть профиль */}
-        <Link href={`/profile/${employee.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-          <button style={{
-            width: '100%', height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 7, background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
-            cursor: 'pointer', fontSize: 14, color: '#333', fontFamily: 'inherit',
-            transition: 'border-color 0.15s',
-          }}>
-            <PersonInCircleIcon size={16} color="#555" />
-            Посмотреть профиль
-          </button>
-        </Link>
-
-        {/* Написать */}
-        <a href={`mailto:${employee.email}`} title={`Написать ${employee.firstName}`}>
-          <button style={{
-            width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: '#fff', border: '1px solid #d9d9d9', borderRadius: 8,
-            cursor: 'pointer', flexShrink: 0,
-            transition: 'border-color 0.15s',
-          }}>
-            <EnvelopeIcon size={15} color="#555" />
-          </button>
-        </a>
       </div>
     </div>
   );
 }
 
-// ── EmployeeRow — только точка + имя + должность ──────────────────────────────
+// ── EmployeeLeaf ──────────────────────────────────────────────────────────────
 
-interface EmployeeRowProps {
+interface EmployeeLeafProps {
   employee: OrgEmployee;
   departmentId: string;
+  depth: number;
   isExpanded: boolean;
   onToggle: () => void;
   isAdmin?: boolean;
   onRemove?: () => void;
 }
 
-function EmployeeRow({ employee, departmentId, isExpanded, onToggle, isAdmin, onRemove }: EmployeeRowProps) {
+function EmployeeLeaf({ employee, departmentId, depth, isExpanded, onToggle, isAdmin, onRemove }: EmployeeLeafProps) {
   const [hovered, setHovered] = useState(false);
   const status = employee.profile?.availabilityStatus ?? 'offline';
   const dotColor = getStatusDotColor(status);
+  const empPadding = (depth + 1) * INDENT;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: employee.id,
@@ -260,88 +248,88 @@ function EmployeeRow({ employee, departmentId, isExpanded, onToggle, isAdmin, on
   });
 
   return (
-    <>
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.3 : 1,
+      }}
+    >
       <div
-        ref={setNodeRef}
         style={{
-          transform: CSS.Translate.toString(transform),
-          opacity: isDragging ? 0.3 : 1,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 8px 8px 4px', borderRadius: 6,
-          background: isExpanded ? '#f0f4ff' : hovered ? '#f7f7f7' : 'transparent',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 24,
+          paddingLeft: empPadding,
+          cursor: 'pointer',
+          userSelect: 'none',
+          borderRadius: 4,
+          background: hovered && !isExpanded ? 'rgba(0,0,0,0.02)' : 'transparent',
           transition: 'background 0.12s',
-          cursor: 'pointer', userSelect: 'none',
         }}
-        className="emp-row"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={onToggle}
         {...listeners}
         {...attributes}
       >
-        {/* Status dot — маленькая точка как на скриншоте */}
-        <span style={{
-          width: 10, height: 10, borderRadius: '50%',
-          background: dotColor, flexShrink: 0, display: 'inline-block',
-        }} />
+        {/* Status dot */}
+        <div style={{
+          width: 40, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <span style={{
+            width: 12, height: 12, borderRadius: '50%',
+            background: dotColor, display: 'inline-block',
+          }} />
+        </div>
 
-        {/* Name + position */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, lineHeight: '20px', color: '#1a1a1a' }}>
-            {employee.firstName} {employee.lastName}
+        {/* Name + position + card */}
+        <div style={{ flex: 1, minWidth: 0, paddingTop: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, lineHeight: '24px', color: '#0e0e0e' }}>
+            {displayName(employee)}
           </div>
           {employee.position && (
-            <div style={{ fontSize: 12, color: '#8c8c8c', lineHeight: '17px' }}>
+            <div style={{ fontSize: 14, color: '#75757d', lineHeight: '24px' }}>
               {employee.position}
             </div>
           )}
+
+          {/* Expanded card */}
+          <div style={{
+            overflow: 'hidden',
+            maxHeight: isExpanded ? 600 : 0,
+            opacity: isExpanded ? 1 : 0,
+            transition: 'max-height 0.25s ease, opacity 0.2s ease',
+          }}>
+            {isExpanded && <EmployeeCard employee={employee} />}
+          </div>
         </div>
 
         {/* Quick actions on hover */}
-        <div
-          style={{ display: 'flex', gap: 4, opacity: hovered ? 1 : 0, transition: 'opacity 0.12s', flexShrink: 0 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Link href={`/profile/${employee.id}`}>
-            <span title="Профиль" style={quickBtnStyle}>
-              <UserOutlined style={{ fontSize: 11 }} />
-            </span>
-          </Link>
-          <a href={`mailto:${employee.email}`}>
-            <span title="Написать" style={quickBtnStyle}>
-              <MailOutlined style={{ fontSize: 11 }} />
-            </span>
-          </a>
-          {isAdmin && onRemove && (
-            <Popconfirm title="Убрать из отдела?" onConfirm={onRemove} okText="Да" cancelText="Нет">
-              <span title="Убрать" style={{ ...quickBtnStyle, borderColor: '#ffccc7', color: '#ff4d4f' }}>
-                ✕
-              </span>
-            </Popconfirm>
-          )}
-        </div>
+        {hovered && !isExpanded && (
+          <div
+            style={{ display: 'flex', gap: 4, flexShrink: 0, paddingTop: 10 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isAdmin && onRemove && (
+              <Popconfirm title="Убрать из отдела?" onConfirm={onRemove} okText="Да" cancelText="Нет">
+                <span title="Убрать" style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: '#fff', border: '1px solid #ffccc7',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#ff4d4f', fontSize: 12,
+                }}>
+                  ✕
+                </span>
+              </Popconfirm>
+            )}
+          </div>
+        )}
       </div>
-
-      <div
-        style={{
-          overflow: 'hidden',
-          maxHeight: isExpanded ? 600 : 0,
-          opacity: isExpanded ? 1 : 0,
-          transition: 'max-height 0.2s ease, opacity 0.2s ease',
-        }}
-      >
-        {isExpanded && <EmployeeCard employee={employee} />}
-      </div>
-    </>
+    </div>
   );
 }
-
-const quickBtnStyle: React.CSSProperties = {
-  width: 24, height: 24, borderRadius: '50%',
-  background: '#fff', border: '1px solid #e8e8e8',
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  cursor: 'pointer', color: '#8c8c8c', fontSize: 13,
-};
 
 // ── DeptActionMenu ─────────────────────────────────────────────────────────────
 
@@ -366,7 +354,11 @@ function DeptActionMenu({ onRename, onDelete, onAddChild, onAssignHead, onAddEmp
     ]}}>
       <span
         className="dept-menu-btn"
-        style={{ width: 24, height: 24, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#aaa' }}
+        style={{
+          width: 32, height: 32, borderRadius: 4,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: '#aaa', flexShrink: 0,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <MoreOutlined />
@@ -386,7 +378,14 @@ interface DepartmentItemProps {
   onRefresh?: () => void;
 }
 
-export default function DepartmentItem({ dept, depth = 0, defaultExpanded = false, searchQuery = '', isAdmin = false, onRefresh }: DepartmentItemProps) {
+export default function DepartmentItem({
+  dept,
+  depth = 0,
+  defaultExpanded = false,
+  searchQuery = '',
+  isAdmin = false,
+  onRefresh,
+}: DepartmentItemProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState<string | null>(null);
@@ -414,13 +413,19 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
   const children  = dept.children ?? [];
 
   const filteredEmployees = searchQuery
-    ? employees.filter((e) => `${e.firstName} ${e.lastName} ${e.patronymic ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? employees.filter((e) =>
+        `${e.firstName} ${e.lastName} ${e.patronymic ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : employees;
 
   const forceExpand = searchQuery.length > 0 && (filteredEmployees.length > 0 || children.length > 0);
-  const isExpanded  = expanded || forceExpand;
+  const isExpanded = expanded || forceExpand;
 
   const headLabel = depth === 0 ? 'Директор департамента' : 'Руководитель отдела';
+  const deptPadding = depth * INDENT;
+  const empPadding = (depth + 1) * INDENT;
+
+  // ── Handlers ──
 
   const fetchAllUsers = async () => {
     if (allUsers.length > 0) return;
@@ -430,7 +435,7 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
       const list = (res.data?.data ?? res.data ?? []) as any[];
       setAllUsers(list.map((u: any) => ({
         value: u.id,
-        label: [u.firstName, u.lastName, u.patronymic].filter(Boolean).join(' ') + (u.position ? ` — ${u.position}` : ''),
+        label: [u.lastName, u.firstName, u.patronymic].filter(Boolean).join(' ') + (u.position ? ` — ${u.position}` : ''),
       })));
     } catch { message.error('Не удалось загрузить сотрудников'); }
     finally { setUsersFetching(false); }
@@ -491,102 +496,131 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
 
   return (
     <>
+      {/* Department header row */}
       <div
         ref={setNodeRef}
+        className="dept-row"
         style={{
-          marginLeft: depth > 0 ? 32 : 0,
-          marginBottom: depth === 0 ? 16 : 6,
-          borderRadius: 6,
-          background: isOver ? '#f0f4ff' : undefined,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 24,
+          paddingLeft: deptPadding,
+          paddingTop: 4,
+          paddingBottom: 4,
+          cursor: 'pointer',
+          userSelect: 'none',
+          borderRadius: 4,
+          background: isOver ? 'rgba(239,49,36,0.04)' : undefined,
           transition: 'background 0.15s',
         }}
+        onClick={() => setExpanded((v) => !v)}
       >
-        {/* Department header row */}
-        <div
-          className="dept-row"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '7px 6px', cursor: 'pointer', userSelect: 'none', borderRadius: 6,
-          }}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {/* +/- circle button */}
-          <span style={{
-            width: 30, height: 30, borderRadius: '50%',
-            border: '1px solid #d0d0d0',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, background: '#fff', color: '#666',
-          }}>
-            {isExpanded
-              ? <MinusOutlined style={{ fontSize: 9 }} />
-              : <PlusOutlined  style={{ fontSize: 9 }} />}
-          </span>
-
-          {/* Name + subtitle */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: depth === 0 ? 17 : 15, fontWeight: 600, color: '#1a1a1a', lineHeight: '22px' }}>
-              {dept.name}
-            </div>
-            <div style={{ fontSize: 13, color: '#8c8c8c', lineHeight: '18px' }}>
-              {dept.head
-                ? `${headLabel} — ${dept.head.firstName} ${dept.head.lastName}`
-                : `${headLabel} не назначен`}
-            </div>
-          </div>
-
-          {isAdmin && (
-            <DeptActionMenu
-              onRename={() => { setRenameName(dept.name); setRenameOpen(true); }}
-              onDelete={handleDelete}
-              onAddChild={() => setAddChildOpen(true)}
-              onAssignHead={() => { setAssignHeadId(dept.head?.id); fetchAllUsers(); setAssignHeadOpen(true); }}
-              onAddEmployee={() => { fetchAllUsers(); setAddEmpOpen(true); }}
-              addChildLabel={depth === 0 ? 'Новый отдел' : 'Добавить подотдел'}
-            />
-          )}
+        {/* +/- circle button */}
+        <div style={{
+          width: 40, height: 40, borderRadius: 24, flexShrink: 0,
+          border: '1px solid #d5d6dc',
+          background: '#fdfcfc',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#75757d',
+          marginTop: 4,
+        }}>
+          {isExpanded
+            ? <MinusOutlined style={{ fontSize: 14 }} />
+            : <PlusOutlined  style={{ fontSize: 14 }} />
+          }
         </div>
 
-        {/* Expanded content */}
-        {isExpanded && (
-          <div style={{ paddingLeft: 32 }}>
-            {children.map((child) => (
-              <DepartmentItem key={child.id} dept={child} depth={depth + 1}
-                defaultExpanded={false} searchQuery={searchQuery}
-                isAdmin={isAdmin} onRefresh={onRefresh} />
-            ))}
-
-            {filteredEmployees.slice(0, visibleCount).map((emp) => (
-              <EmployeeRow
-                key={emp.id} employee={emp} departmentId={dept.id}
-                isExpanded={expandedEmployeeId === emp.id}
-                onToggle={() => setExpandedEmployeeId((prev) => (prev === emp.id ? null : emp.id))}
-                isAdmin={isAdmin}
-                onRemove={isAdmin ? () => handleRemoveEmployee(emp.id) : undefined}
-              />
-            ))}
-
-            {filteredEmployees.length > visibleCount && (
-              <div style={{ paddingLeft: 20, paddingBottom: 4, paddingTop: 2 }}>
-                <span
-                  style={{ fontSize: 12, color: '#8c8c8c', cursor: 'pointer', textDecoration: 'underline dotted' }}
-                  onClick={(e) => { e.stopPropagation(); setVisibleCount((c) => c + PAGE_INCREMENT); }}
-                >
-                  Показать ещё {Math.min(filteredEmployees.length - visibleCount, PAGE_INCREMENT)}
-                </span>
-              </div>
-            )}
+        {/* Name + head label */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: 16, fontWeight: 600, lineHeight: '24px',
+            color: '#0e0e0e',
+          }}>
+            {dept.name}
           </div>
+          <div style={{
+            fontSize: 14, lineHeight: '24px',
+            color: '#75757d',
+          }}>
+            {dept.head
+              ? `${headLabel} — ${displayName(dept.head)}`
+              : `${headLabel} не назначен`}
+          </div>
+        </div>
+
+        {isAdmin && (
+          <DeptActionMenu
+            onRename={() => { setRenameName(dept.name); setRenameOpen(true); }}
+            onDelete={handleDelete}
+            onAddChild={() => setAddChildOpen(true)}
+            onAssignHead={() => { setAssignHeadId(dept.head?.id); fetchAllUsers(); setAssignHeadOpen(true); }}
+            onAddEmployee={() => { fetchAllUsers(); setAddEmpOpen(true); }}
+            addChildLabel={depth === 0 ? 'Новый отдел' : 'Добавить подотдел'}
+          />
         )}
       </div>
 
-      {/* Rename */}
+      {/* Expanded content — children + employees */}
+      {isExpanded && (
+        <>
+          {children.map((child) => (
+            <DepartmentItem
+              key={child.id}
+              dept={child}
+              depth={depth + 1}
+              defaultExpanded={false}
+              searchQuery={searchQuery}
+              isAdmin={isAdmin}
+              onRefresh={onRefresh}
+            />
+          ))}
+
+          {filteredEmployees.slice(0, visibleCount).map((emp) => (
+            <EmployeeLeaf
+              key={emp.id}
+              employee={emp}
+              departmentId={dept.id}
+              depth={depth}
+              isExpanded={expandedEmployeeId === emp.id}
+              onToggle={() => setExpandedEmployeeId((prev) => (prev === emp.id ? null : emp.id))}
+              isAdmin={isAdmin}
+              onRemove={isAdmin ? () => handleRemoveEmployee(emp.id) : undefined}
+            />
+          ))}
+
+          {filteredEmployees.length > visibleCount && (
+            <div style={{ paddingLeft: empPadding + INDENT }}>
+              <button
+                style={{
+                  height: 48,
+                  padding: '0 32px',
+                  background: '#fdfcfc',
+                  border: '1px solid #d5d6dc',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: '#0e0e0e',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  marginTop: 8,
+                  marginBottom: 8,
+                }}
+                onClick={(e) => { e.stopPropagation(); setVisibleCount((c) => c + PAGE_INCREMENT); }}
+              >
+                Загрузить ещё {Math.min(filteredEmployees.length - visibleCount, PAGE_INCREMENT)}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Modals */}
       <Modal title="Переименовать" open={renameOpen} onOk={handleRename}
         onCancel={() => setRenameOpen(false)} confirmLoading={renameLoading} okText="Сохранить" cancelText="Отмена">
         <Input autoFocus value={renameName} onChange={(e) => setRenameName(e.target.value)}
           onPressEnter={handleRename} style={{ marginTop: 8 }} />
       </Modal>
 
-      {/* Add child */}
       <Modal title="Новый отдел" open={addChildOpen} onOk={handleAddChild}
         onCancel={() => { setAddChildOpen(false); setAddChildName(''); }}
         confirmLoading={addChildLoading} okText="Создать" cancelText="Отмена">
@@ -594,7 +628,6 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
           onPressEnter={handleAddChild} placeholder="Название отдела" style={{ marginTop: 8 }} />
       </Modal>
 
-      {/* Assign head */}
       <Modal title={`Руководитель — «${dept.name}»`} open={assignHeadOpen} onOk={handleAssignHead}
         onCancel={() => setAssignHeadOpen(false)} confirmLoading={assignHeadLoading} okText="Назначить" cancelText="Отмена">
         <Select showSearch allowClear loading={usersFetching} placeholder="Выберите сотрудника"
@@ -603,7 +636,6 @@ export default function DepartmentItem({ dept, depth = 0, defaultExpanded = fals
           options={allUsers} />
       </Modal>
 
-      {/* Add employee */}
       <Modal title={`Добавить в «${dept.name}»`} open={addEmpOpen} onOk={handleAddEmployee}
         onCancel={() => { setAddEmpOpen(false); setAddEmpId(undefined); }}
         confirmLoading={addEmpLoading} okText="Добавить" cancelText="Отмена"
