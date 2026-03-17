@@ -33,3 +33,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Project docs (local only)
+CLAUDE.md
+STRUCTURE.md
