@@ -1,0 +1,21 @@
+apiVersion: v2
+name: lms-portal
+description: LMS Portal — corporate learning management system
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - lms
+  - learning
+  - portal
+  - nestjs
+  - nextjs
+dependencies:
+  - name: postgresql
+    version: "16.4.4"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: "20.6.2"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

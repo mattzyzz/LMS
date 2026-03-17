@@ -1,0 +1,32 @@
+
+=== LMS Portal ===
+
+{{- if .Values.ingress.enabled }}
+
+Application URL:
+  {{- if .Values.ingress.tls.enabled }}
+  https://{{ .Values.ingress.host }}
+  {{- else }}
+  http://{{ .Values.ingress.host }}
+  {{- end }}
+
+API URL:
+  {{- if .Values.ingress.tls.enabled }}
+  https://{{ .Values.ingress.host }}/api
+  {{- else }}
+  http://{{ .Values.ingress.host }}/api
+  {{- end }}
+
+{{- else }}
+
+Get the application URL by running:
+  kubectl port-forward svc/{{ include "lms.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+  kubectl port-forward svc/{{ include "lms.fullname" . }}-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }}
+
+{{- end }}
+
+Components:
+  - Backend:  {{ .Values.backend.replicaCount }} replica(s)
+  - Frontend: {{ .Values.frontend.replicaCount }} replica(s)
+  - PostgreSQL: {{ if .Values.postgresql.enabled }}managed by chart{{ else }}external{{ end }}
+  - Redis: {{ if .Values.redis.enabled }}managed by chart{{ else }}external{{ end }}
