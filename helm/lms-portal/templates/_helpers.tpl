@@ -72,25 +72,17 @@ app.kubernetes.io/component: frontend
 {{- end }}
 
 {{/*
-PostgreSQL host
+PostgreSQL host — set via backend.env.DATABASE_HOST
 */}}
 {{- define "lms.postgresql.host" -}}
-{{- if .Values.postgresql.enabled }}
-{{- printf "%s-postgresql" .Release.Name }}
-{{- else }}
 {{- .Values.backend.env.DATABASE_HOST }}
-{{- end }}
 {{- end }}
 
 {{/*
-Redis host
+Redis host — set via backend.env.REDIS_HOST
 */}}
 {{- define "lms.redis.host" -}}
-{{- if .Values.redis.enabled }}
-{{- printf "%s-redis-master" .Release.Name }}
-{{- else }}
 {{- .Values.backend.env.REDIS_HOST }}
-{{- end }}
 {{- end }}
 
 {{/*

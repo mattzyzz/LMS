@@ -48,27 +48,3 @@ ingress:
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
     cert-manager.io/cluster-issuer: letsencrypt-prod
-
-postgresql:
-  primary:
-    persistence:
-      size: 50Gi
-    resources:
-      requests:
-        cpu: 500m
-        memory: 512Mi
-      limits:
-        cpu: "2"
-        memory: 2Gi
-
-redis:
-  master:
-    persistence:
-      size: 5Gi
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi

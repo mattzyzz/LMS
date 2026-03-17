@@ -26,20 +26,3 @@ frontend:
 
 ingress:
   host: staging-lms.example.com
-
-postgresql:
-  primary:
-    persistence:
-      size: 5Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-
-redis:
-  master:
-    persistence:
-      size: 1Gi

@@ -23,9 +23,11 @@ backend:
   env:
     APP_PORT: "3001"
     APP_ENV: production
+    DATABASE_HOST: ""      # set to your PostgreSQL host
     DATABASE_PORT: "5432"
     DATABASE_NAME: lms
     DATABASE_LOGGING: "false"
+    REDIS_HOST: ""         # set to your Redis host
     REDIS_PORT: "6379"
     JWT_EXPIRES_IN: "15m"
     JWT_REFRESH_EXPIRES_IN: "7d"
@@ -111,40 +113,3 @@ ingress:
   tls:
     enabled: false
     secretName: lms-tls
-
-## PostgreSQL (Bitnami subchart)
-postgresql:
-  enabled: true
-  auth:
-    username: lms
-    password: ""       # set via --set
-    database: lms
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-    resources:
-      requests:
-        cpu: 250m
-        memory: 256Mi
-      limits:
-        cpu: "1"
-        memory: 1Gi
-
-## Redis (Bitnami subchart)
-redis:
-  enabled: true
-  architecture: standalone
-  auth:
-    enabled: false
-  master:
-    persistence:
-      enabled: true
-      size: 2Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 250m
-        memory: 256Mi
