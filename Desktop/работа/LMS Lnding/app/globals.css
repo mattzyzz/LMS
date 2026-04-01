@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-accent: #EF3124;
+  --color-bg: #0D0D0D;
+  --color-surface: #161616;
+  --color-card: #1E1E1E;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0D0D0D;
+  color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid #EF3124;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #EF3124;
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee 28s linear infinite;
+  width: max-content;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Footer */
+.footer-logo {
+  font-weight: 800;
+  font-size: 18px;
+  color: #ffffff;
+  text-decoration: none;
+}
+.footer-link {
+  font-size: 13px;
+  color: #555555;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-link:hover {
+  color: #888888;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: #EF3124;
+  color: white;
+  padding: 8px 16px;
+  z-index: 9999;
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* ROI Calculator slider */
+.roi-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #2a2a2a;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.roi-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #EF3124;
+  border-radius: 50%;
+  border: 2px solid #1a1a1a;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.roi-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(239, 49, 36, 0.2);
+}
+.roi-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #EF3124;
+  border-radius: 50%;
+  border: 2px solid #1a1a1a;
+  cursor: pointer;
+}
+.roi-slider::-moz-range-track {
+  height: 4px;
+  background: #2a2a2a;
+  border-radius: 2px;
+}
